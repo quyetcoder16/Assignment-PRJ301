@@ -59,7 +59,18 @@ backend/
 ### Frontend (`/frontend`)
 
 ```
-
+├── public               # Chứa các tệp tĩnh như favicon, hình ảnh, v.v.
+└── src                  # Chứa mã nguồn chính của ứng dụng React.
+    ├── App.jsx          # Component gốc của ứng dụng.
+    ├── main.jsx         # Điểm vào chính của ứng dụng React.
+    ├── assets           # Chứa tài nguyên như hình ảnh.
+    ├── components       # Các component UI được tái sử dụng.
+    ├── pages            # Các trang chính của ứng dụng.
+    ├── redux            # Quản lý state bằng Redux.
+    ├── routes           # Cấu hình router của ứng dụng.
+    ├── service          # Gọi API và xử lý dữ liệu từ backend.
+    ├── templates        # Chứa các template dùng chung.
+    └── utils            # Chứa các hàm tiện ích chung.
 ```
 
 ## Installation & Setup
@@ -75,7 +86,7 @@ backend/
 
 ### Frontend
 
-1. Cài đặt Node.js (>= 18)
+1. Cài đặt Node.js (22.11.0)
 2. Cài đặt dependencies:
    ```sh
    cd frontend
@@ -88,7 +99,10 @@ backend/
 
 ## Features
 
-- Xem
+- Xem đơn của mình
+- Tạo đơn xin nghỉ
+- Xét duyệt đơn
+- Xem agenda
 
 ## License
 
