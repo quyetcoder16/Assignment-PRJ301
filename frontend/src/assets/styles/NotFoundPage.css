@@ -1,0 +1,26 @@
+/* styles/NotFoundPage.css */
+.not-found-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  background-color: #f8fbff;
+  text-align: center;
+}
+
+.not-found-description {
+  font-size: 16px;
+  color: #666;
+  margin: 10px 0 20px;
+}
+
+.not-found-button {
+  background-color: #005eff;
+  color: white;
+  padding: 12px 24px;
+  font-size: 16px;
+  border-radius: 40px;
+  text-transform: none;
+}
