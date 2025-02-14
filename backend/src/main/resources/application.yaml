@@ -1,3 +1,18 @@
 spring:
   application:
     name: leaveManagement
+  datasource:
+    url: ${DBMS_CONNECTION:jdbc:sqlserver://localhost:1433;databaseName=leave_management;encrypt=true;trustServerCertificate=true}
+    username:  ${DBMS_USERNAME:sa}
+    password: ${DBMS_PASSWORD:Quyet@123}
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+
+  jpa:
+    database-platform: org.hibernate.dialect.SQLServerDialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+server:
+  port: 8081
+  servlet:
+    context-path: /api

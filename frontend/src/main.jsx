@@ -18,11 +18,11 @@ createRoot(document.getElementById("root")).render(
       theme={{
         token: {
           // Seed Token
-          colorPrimary: "#008390",
+          colorPrimary: "#50CDDA",
           borderRadius: 2,
 
           // Alias Token
-          colorBgContainer: "#f6ffed",
+          colorBgContainer: "#D9E3EE",
         },
       }}
     >
