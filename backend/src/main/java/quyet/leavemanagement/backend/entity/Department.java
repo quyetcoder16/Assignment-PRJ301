@@ -27,7 +27,7 @@ public class Department {
     String description;
 
     @OneToOne
-    @JoinColumn(name = "manager_id", referencedColumnName = "user_id")
+    @JoinColumn(name = "manager_id", referencedColumnName = "user_id", unique = true)
     User manager;
 
     @OneToMany(mappedBy = "department")

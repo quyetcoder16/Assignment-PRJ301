@@ -3,6 +3,7 @@ package quyet.leavemanagement.backend.service.impl;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import quyet.leavemanagement.backend.dto.response.leave_request.LeaveRequestResponse;
 import quyet.leavemanagement.backend.entity.RequestLeave;
@@ -21,6 +22,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
 
     RequestLeaveRepository requestLeaveRepository;
 
+    @PreAuthorize("hasAuthority('VIEW_SUB_REQUEST')")
     @Override
     public List<LeaveRequestResponse> getAllMyLeaveRequests() {
         List<LeaveRequestResponse> leaveRequestResponses = requestLeaveRepository.findAll().stream().map(requestLeave -> {
@@ -41,6 +43,7 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
         return leaveRequestResponses;
     }
 
+    @PreAuthorize("hasRole('LEADER')")
     @Override
     public LeaveRequestResponse getLeaveRequestById(int id) {
         RequestLeave requestLeave = requestLeaveRepository.findById(id).orElseThrow(() -> new AppException(ErrorCode.LEAVE_REQUEST_NOT_FOUND));
