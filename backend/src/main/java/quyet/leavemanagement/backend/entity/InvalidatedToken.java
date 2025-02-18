@@ -8,6 +8,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Table(name = "invalidated_token")
@@ -24,6 +25,6 @@ public class InvalidatedToken {
 
 
     @Column(name = "expiry_time", nullable = false)
-    LocalDateTime expiryTime;
+    Date expiryTime;
 
 }

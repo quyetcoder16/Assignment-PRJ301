@@ -62,8 +62,12 @@ public class JwtServiceImpl implements JwtService {
         // check expiration time of token
         Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
 
-        if (!(verified && expirationTime.after(new Date()))) {
+        if (!verified) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        if (!expirationTime.after(new Date())) {
+            throw new AppException(ErrorCode.TOKEN_EXPIRED_EXCEPTION);
         }
 
         // check token disable
