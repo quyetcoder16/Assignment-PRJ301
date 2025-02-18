@@ -6,11 +6,13 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import quyet.leavemanagement.backend.dto.request.auth.LoginRequest;
+import quyet.leavemanagement.backend.dto.request.auth.LogoutRequest;
 import quyet.leavemanagement.backend.dto.request.auth.RefreshTokenRequest;
 import quyet.leavemanagement.backend.dto.response.auth.LoginResponse;
 import quyet.leavemanagement.backend.dto.response.auth.RefreshTokenResponse;
@@ -27,6 +29,7 @@ import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.Date;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -88,5 +91,34 @@ public class AuthServiceImpl implements AuthService {
                 .accessToken(jwtService.generateAccessToken(user))
                 .refreshToken(jwtService.generateRefreshToken(user))
                 .build();
+    }
+
+    @Override
+    public void logout(LogoutRequest logoutRequest) throws ParseException, JOSEException {
+        try {
+            SignedJWT signedToken = jwtService.verifyToken(logoutRequest.getAccessToken(), false);
+            String tokenId = signedToken.getJWTClaimsSet().getJWTID();
+            Date expiryTime = signedToken.getJWTClaimsSet().getExpirationTime();
+            InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                    .idToken(tokenId)
+                    .expiryTime(expiryTime)
+                    .build();
+            invalidatedTokenRepository.save(invalidatedToken);
+        } catch (AppException e) {
+            log.info("Access token already expired");
+        }
+
+        try {
+            SignedJWT signedToken = jwtService.verifyToken(logoutRequest.getRefreshToken(), true);
+            String tokenId = signedToken.getJWTClaimsSet().getJWTID();
+            Date expiryTime = signedToken.getJWTClaimsSet().getExpirationTime();
+            InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                    .idToken(tokenId)
+                    .expiryTime(expiryTime)
+                    .build();
+            invalidatedTokenRepository.save(invalidatedToken);
+        } catch (AppException e) {
+            log.info("Refresh token already expired");
+        }
     }
 }

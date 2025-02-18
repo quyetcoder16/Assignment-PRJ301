@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import quyet.leavemanagement.backend.dto.request.auth.LoginRequest;
+import quyet.leavemanagement.backend.dto.request.auth.LogoutRequest;
 import quyet.leavemanagement.backend.dto.request.auth.RefreshTokenRequest;
 import quyet.leavemanagement.backend.dto.response.auth.LoginResponse;
 import quyet.leavemanagement.backend.dto.response.auth.RefreshTokenResponse;
@@ -38,6 +39,14 @@ public class AuthController {
         return ApiResponse.<RefreshTokenResponse>builder()
                 .message("refresh token successful!")
                 .data(authService.refreshToken(refreshTokenRequest))
+                .build();
+    }
+
+    @PostMapping("/logout")
+    public ApiResponse<Void> logout(@RequestBody LogoutRequest logoutRequest) throws ParseException, JOSEException {
+        authService.logout(logoutRequest);
+        return ApiResponse.<Void>builder()
+                .message("logout successful!")
                 .build();
     }
 
