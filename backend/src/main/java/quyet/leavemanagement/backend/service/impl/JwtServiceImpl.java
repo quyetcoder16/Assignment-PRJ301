@@ -50,8 +50,7 @@ public class JwtServiceImpl implements JwtService {
     @Value("${jwt.refresh-token-duration}")
     int REFRESH_TOKEN_DURATION;
 
-    @Override
-    public SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException {
+    private SignedJWT verifyAndParseToken(String token, boolean isRefresh) throws JOSEException, ParseException {
         String signerKey = isRefresh ? REFRESH_TOKEN_SIGNER_KEY : ACCESS_TOKEN_SIGNER_KEY;
 
         // check token is created by server using HMAC(hash base message authentication) using secret key
@@ -59,14 +58,29 @@ public class JwtServiceImpl implements JwtService {
         SignedJWT signedJWT = SignedJWT.parse(token);
         boolean verified = signedJWT.verify(verifier);
 
-        // check expiration time of token
-        Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        // check verify toke
 
         if (!verified) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
-        if (!expirationTime.after(new Date())) {
+        // check token disable
+        if (invalidatedTokenRepository.existsById(signedJWT.getJWTClaimsSet().getJWTID())) {
+            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        }
+
+        return signedJWT;
+    }
+
+    @Override
+    public SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException {
+
+        SignedJWT signedJWT = verifyAndParseToken(token, isRefresh);
+
+        // check expiration time of token
+        Date expirationTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+
+        if (expirationTime == null || !expirationTime.after(new Date())) {
             throw new AppException(ErrorCode.TOKEN_EXPIRED_EXCEPTION);
         }
 
@@ -76,6 +90,11 @@ public class JwtServiceImpl implements JwtService {
         }
 
         return signedJWT;
+    }
+
+    @Override
+    public SignedJWT getSignedJWT(String token, boolean isRefresh) throws ParseException, JOSEException {
+        return verifyAndParseToken(token, isRefresh);
     }
 
     /**

@@ -11,6 +11,8 @@ import java.text.ParseException;
 public interface JwtService {
     SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException;
 
+    SignedJWT getSignedJWT(String token, boolean isRefresh) throws ParseException, JOSEException;
+
     String generateAccessToken(User user);
 
     String generateRefreshToken(User user);

@@ -19,7 +19,7 @@ public class User {
     @Column(name = "user_id")
     Long userId;
 
-    @Column(name = "email", nullable = false)
+    @Column(name = "email", nullable = false, unique = true)
     String email;
 
     @Column(name = "password", nullable = false)

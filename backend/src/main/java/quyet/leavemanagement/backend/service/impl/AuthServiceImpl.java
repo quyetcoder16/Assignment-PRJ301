@@ -58,17 +58,20 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public RefreshTokenResponse refreshToken(RefreshTokenRequest refreshTokenRequest) throws ParseException, JOSEException {
         // check access token is expired
-        try {
-            SignedJWT signedJWTAccessToken = jwtService.verifyToken(refreshTokenRequest.getAccessToken(), false);
-            // if access token is valid do not refresh token
-            throw new AppException(ErrorCode.UNAUTHORIZED);
-        } catch (AppException e) {
-            if (!e.getErrorCode().name().equals(ErrorCode.TOKEN_EXPIRED_EXCEPTION.name())) {
-                throw new AppException(ErrorCode.UNAUTHORIZED);
-            }
+
+        SignedJWT signedJWTAccessToken = jwtService.getSignedJWT(refreshTokenRequest.getAccessToken(), false);
+
+        if (signedJWTAccessToken.getJWTClaimsSet().getExpirationTime().after(new Date())) {
+            throw new AppException(ErrorCode.ACCESS_TOKEN_STILL_VALID);
         }
 
         SignedJWT signedJWTRefreshToken = jwtService.verifyToken(refreshTokenRequest.getRefreshToken(), true);
+
+        // check token and refresh token from one user
+        String userId = signedJWTRefreshToken.getJWTClaimsSet().getSubject();
+        if (!userId.equals(signedJWTRefreshToken.getJWTClaimsSet().getSubject())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
 
         String RefreshTokenID = signedJWTRefreshToken.getJWTClaimsSet().getJWTID();
         Date refreshTokenExpiration = signedJWTRefreshToken.getJWTClaimsSet().getExpirationTime();
@@ -82,7 +85,6 @@ public class AuthServiceImpl implements AuthService {
             invalidatedTokenRepository.save(invalidatedToken);
         }
 
-        String userId = signedJWTRefreshToken.getJWTClaimsSet().getSubject();
 
         User user = userRepository.findByUserId(Integer.parseInt(userId)).orElseThrow(
                 () -> new AppException(ErrorCode.USER_NOT_FOUND));
@@ -95,30 +97,36 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public void logout(LogoutRequest logoutRequest) throws ParseException, JOSEException {
-        try {
-            SignedJWT signedToken = jwtService.verifyToken(logoutRequest.getAccessToken(), false);
-            String tokenId = signedToken.getJWTClaimsSet().getJWTID();
-            Date expiryTime = signedToken.getJWTClaimsSet().getExpirationTime();
-            InvalidatedToken invalidatedToken = InvalidatedToken.builder()
-                    .idToken(tokenId)
-                    .expiryTime(expiryTime)
-                    .build();
-            invalidatedTokenRepository.save(invalidatedToken);
-        } catch (AppException e) {
-            log.info("Access token already expired");
+
+        SignedJWT signedAccessToken = jwtService.getSignedJWT(logoutRequest.getAccessToken(), false);
+        SignedJWT signedRefreshToken = jwtService.getSignedJWT(logoutRequest.getRefreshToken(), true);
+        String accessTokenUserId = signedAccessToken.getJWTClaimsSet().getSubject();
+        String refreshTokenUserId = signedRefreshToken.getJWTClaimsSet().getSubject();
+
+        // check same userId
+        if (!accessTokenUserId.equals(refreshTokenUserId)) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
-        try {
-            SignedJWT signedToken = jwtService.verifyToken(logoutRequest.getRefreshToken(), true);
-            String tokenId = signedToken.getJWTClaimsSet().getJWTID();
-            Date expiryTime = signedToken.getJWTClaimsSet().getExpirationTime();
+        Date expiryTimeAccessToken = signedAccessToken.getJWTClaimsSet().getExpirationTime();
+        String accessTokenJWTID = signedAccessToken.getJWTClaimsSet().getJWTID();
+        Date expiryTimeRefreshToken = signedRefreshToken.getJWTClaimsSet().getExpirationTime();
+        String refreshTokenJWTID = signedRefreshToken.getJWTClaimsSet().getJWTID();
+
+        if (expiryTimeAccessToken.after(new Date())) {
             InvalidatedToken invalidatedToken = InvalidatedToken.builder()
-                    .idToken(tokenId)
-                    .expiryTime(expiryTime)
+                    .idToken(accessTokenJWTID)
+                    .expiryTime(expiryTimeAccessToken)
                     .build();
             invalidatedTokenRepository.save(invalidatedToken);
-        } catch (AppException e) {
-            log.info("Refresh token already expired");
+        }
+
+        if (expiryTimeRefreshToken.after(new Date())) {
+            InvalidatedToken invalidatedToken = InvalidatedToken.builder()
+                    .idToken(refreshTokenJWTID)
+                    .expiryTime(expiryTimeRefreshToken)
+                    .build();
+            invalidatedTokenRepository.save(invalidatedToken);
         }
     }
 }
