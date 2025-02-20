@@ -12,6 +12,18 @@ const loginAPI = async (email, password) => {
   });
 };
 
+const logoutAPI = async (accessToken, refreshToken) => {
+  return await axios({
+    url: `${DOMAIN}/auth/logout`,
+    method: "POST",
+    data: {
+      accessToken,
+      refreshToken,
+    },
+  });
+};
+
 export const authServicer = {
   loginAPI,
+  logoutAPI,
 };

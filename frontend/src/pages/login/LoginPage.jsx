@@ -23,9 +23,9 @@ const LoginPage = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const accessToken = localStorage.getItem(ACCESS_TOKEN);
-  const refreshToken = localStorage.getItem(REFRESH_TOKEN);
-  const userInfo = localStorage.getItem(USER_INFO);
+  let accessToken = localStorage.getItem(ACCESS_TOKEN);
+  let refreshToken = localStorage.getItem(REFRESH_TOKEN);
+  let userInfo = localStorage.getItem(USER_INFO);
   useEffect(() => {
     if (accessToken && refreshToken && userInfo) {
       navigate("/");

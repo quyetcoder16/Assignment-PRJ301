@@ -6,9 +6,9 @@ import {
 } from "../utils/setting/config";
 
 export default function ProtectedRoute() {
-  const accessToken = localStorage.getItem(ACCESS_TOKEN);
-  const refreshToken = localStorage.getItem(REFRESH_TOKEN);
-  const userInfo = localStorage.getItem(USER_INFO);
+  let accessToken = localStorage.getItem(ACCESS_TOKEN);
+  let refreshToken = localStorage.getItem(REFRESH_TOKEN);
+  let userInfo = localStorage.getItem(USER_INFO);
 
   if (!accessToken || !refreshToken || !userInfo) {
     return <Navigate to={"/login"} />;

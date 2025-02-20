@@ -77,4 +77,35 @@ export const loginUser = (email, password) => {
   };
 };
 
+export const logoutUser = () => {
+  return async (dispatch, getState) => {
+    try {
+      const { accessToken, refreshToken } = getState().authReducer;
+
+      await authServicer.logoutAPI(accessToken, refreshToken);
+
+      localStorage.removeItem(ACCESS_TOKEN);
+      localStorage.removeItem(REFRESH_TOKEN);
+      localStorage.removeItem(USER_INFO);
+
+      dispatch(setUserLogin({ accessToken: "", refreshToken: "", user: null }));
+
+      dispatch(
+        showNotification({
+          type: NOTIFICATION_TYPE.success,
+          message: "Logged out successfully",
+        })
+      );
+    } catch (error) {
+      const data = error?.response?.data;
+      dispatch(
+        showNotification({
+          type: NOTIFICATION_TYPE.error,
+          message: data?.message || "Logout failed. Please try again.",
+        })
+      );
+    }
+  };
+};
+
 export default authReducer.reducer;

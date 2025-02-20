@@ -48,6 +48,8 @@ function getItem(label, key, icon, children) {
 
 import logo from "../assets/img/logo.png";
 import { USER_INFO } from "../utils/setting/config";
+import { useDispatch } from "react-redux";
+import { logoutUser } from "../redux/reducer/authReducer";
 
 const items = [
   //   getItem("Option 1", "1", <PieChartOutlined />),
@@ -71,13 +73,15 @@ export default function HomeTemplate() {
   } = theme.useToken();
 
   const navigate = useNavigate();
+  const dispatch = useDispatch();
   let userInfo = JSON.parse(localStorage.getItem(USER_INFO));
 
   const handleMenuClick = (e) => {
     if (e.key === "logout") {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      navigate("/login");
+      try {
+        dispatch(logoutUser());
+        navigate("/login");
+      } catch (error) {}
     }
   };
 
