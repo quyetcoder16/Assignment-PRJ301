@@ -20,10 +20,10 @@ public class RequestLeave {
     @Column(name = "id_request")
     int idRequest;
 
-    @Column(name = "title")
+    @Column(name = "title",columnDefinition = "NVARCHAR(255)")
     String title;
 
-    @Column(name = "reason")
+    @Column(name = "reason",columnDefinition = "NVARCHAR(1000)")
     String reason;
 
     @Column(name = "from_date")
@@ -32,7 +32,7 @@ public class RequestLeave {
     @Column(name = "to_date")
     LocalDate toDate;
 
-    @Column(name = "note_process")
+    @Column(name = "note_process",columnDefinition = "NVARCHAR(1000)")
     String noteProcess;
 
     @ManyToOne

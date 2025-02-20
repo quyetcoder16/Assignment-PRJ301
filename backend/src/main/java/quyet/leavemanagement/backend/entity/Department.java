@@ -20,10 +20,10 @@ public class Department {
     @Column(name = "dep_id")
     int depId;
 
-    @Column(name = "dep_name")
+    @Column(name = "dep_name", columnDefinition = "NVARCHAR(255)")
     String depName;
 
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "NVARCHAR(255)")
     String description;
 
     @OneToOne

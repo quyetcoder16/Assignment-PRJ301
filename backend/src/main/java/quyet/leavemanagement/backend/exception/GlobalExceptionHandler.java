@@ -17,13 +17,13 @@ public class GlobalExceptionHandler {
      * @param request
      * @return A ResponseEntity containing the error response information.
      */
-//    @ExceptionHandler(value = Exception.class)
-//    public ResponseEntity<ApiResponse> handlingOtherException(Exception e, HttpServletRequest request) {
-//        ApiResponse response = new ApiResponse();
-//        response.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
-//        response.setStatusCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getErrorCode());
-//        return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getHttpStatusCode()).body(response);
-//    }
+    @ExceptionHandler(value = Exception.class)
+    public ResponseEntity<ApiResponse> handlingOtherException(Exception e, HttpServletRequest request) {
+        ApiResponse response = new ApiResponse();
+        response.setMessage(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage());
+        response.setStatusCode(ErrorCode.UNCATEGORIZED_EXCEPTION.getErrorCode());
+        return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getHttpStatusCode()).body(response);
+    }
 
     // handling access denied exception (forbidden)
     @ExceptionHandler(value = AccessDeniedException.class)

@@ -17,9 +17,9 @@ public class RequestStatus {
     @Column(name = "status_id")
     int statusId;
 
-    @Column(name = "status_name")
+    @Column(name = "status_name",columnDefinition = "NVARCHAR(255)")
     String statusName;
 
-    @Column(name = "description")
+    @Column(name = "description",columnDefinition = "NVARCHAR(500)")
     String description;
 }

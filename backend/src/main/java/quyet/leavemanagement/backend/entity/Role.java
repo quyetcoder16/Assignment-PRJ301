@@ -18,7 +18,7 @@ public class Role {
     @Column(name = "role_name")
     String roleName;
 
-    @Column(name = "description", length = 1000)
+    @Column(name = "description", columnDefinition = "NVARCHAR(255)")
     String description;
 
     @OneToMany(mappedBy = "role")

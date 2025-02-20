@@ -25,7 +25,7 @@ public class User {
     @Column(name = "password", nullable = false)
     String password;
 
-    @Column(name = "full_name")
+    @Column(name = "full_name", columnDefinition = "NVARCHAR(255)")
     String fullName;
 
     @OneToMany(mappedBy = "user")

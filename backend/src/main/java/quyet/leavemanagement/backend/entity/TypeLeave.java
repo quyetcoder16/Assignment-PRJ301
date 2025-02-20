@@ -20,6 +20,6 @@ public class TypeLeave {
     @Column(name = "name_type_leave")
     String nameTypeLeave;
 
-    @Column(name = "description")
+    @Column(name = "description", columnDefinition = "NVARCHAR(255)")
     String description;
 }

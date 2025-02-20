@@ -15,10 +15,10 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Permission {
     @Id
-    @Column(name = "permission_name")
+    @Column(name = "permission_name", columnDefinition = "NVARCHAR(255)")
     String permissionName;
 
-    @Column(name = "description", length = 1000)
+    @Column(name = "description", length = 1000, columnDefinition = "NVARCHAR(1000)")
     String description;
 
     @OneToMany(mappedBy = "permission")
