@@ -1,31 +1,71 @@
+import { Table, Tag } from "antd";
 import { useEffect, useState } from "react";
-import { myLeaveRequestService } from "../../service/myLeaveRequestService";
+import { useDispatch, useSelector } from "react-redux";
+import { getAllMyLeaveRequest } from "../../redux/reducer/leaveRequestReducer";
+
+const columns = [
+  {
+    title: "Title",
+    dataIndex: "title",
+    key: "title",
+  },
+  {
+    title: "Reason",
+    dataIndex: "reason",
+    key: "reason",
+  },
+  {
+    title: "From Date",
+    dataIndex: "fromDate",
+    key: "fromDate",
+    render: (text) => new Date(text).toLocaleDateString("en-GB"),
+  },
+  {
+    title: "To Date",
+    dataIndex: "toDate",
+    key: "toDate",
+    render: (text) => new Date(text).toLocaleDateString("en-GB"),
+  },
+  {
+    title: "Status",
+    dataIndex: "nameRequestStatus",
+    key: "status",
+    render: (status) => {
+      let color = status === "In progress" ? "blue" : "green";
+      return <Tag color={color}>{status}</Tag>;
+    },
+  },
+  {
+    title: "Type",
+    dataIndex: "nameTypeLeave",
+    key: "type",
+  },
+  {
+    title: "Processor",
+    dataIndex: "nameUserProcess",
+    key: "processor",
+    render: (text) => (text ? text : "-"),
+  },
+];
 
 const LeaveRequest = () => {
-  const [leaveRequests, setLeaveRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const dispatch = useDispatch();
+  const { leaveRequests } = useSelector((state) => state.leaveRequestReducer);
 
   useEffect(() => {
-    const fetchLeaveRequests = async () => {
-      try {
-        const response = await myLeaveRequestService.getAllMyLeaveRequestAPi();
-        console.log(response);
-        setLeaveRequests(response.data); // Giả sử API trả về danh sách đơn nghỉ phép
-      } catch (err) {
-        setError("Failed to fetch leave requests");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchLeaveRequests();
-  }, []);
+    dispatch(getAllMyLeaveRequest());
+  }, [dispatch]);
 
   return (
     <div>
-      <h1>My Leave Request</h1>
-      <p>Danh sách các đơn nghỉ phép của bạn sẽ xuất hiện ở đây.</p>
+      <div className="container">
+        <h1>My Leave Requests</h1>
+        <Table
+          columns={columns}
+          dataSource={leaveRequests}
+          rowKey="idRequest"
+        />
+      </div>
     </div>
   );
 };

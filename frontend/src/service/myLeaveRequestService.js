@@ -2,7 +2,7 @@ import { DOMAIN } from "../utils/setting/config";
 import authorizedAxiosInstance from "./authorizedAxios";
 
 const getAllMyLeaveRequestAPi = async () => {
-  authorizedAxiosInstance.get(`${DOMAIN}/leave_requests`);
+  return authorizedAxiosInstance.get(`${DOMAIN}/my_leave_request`);
 };
 
 export const myLeaveRequestService = {

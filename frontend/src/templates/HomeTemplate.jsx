@@ -52,18 +52,16 @@ import { useDispatch } from "react-redux";
 import { logoutUser } from "../redux/reducer/authReducer";
 
 const items = [
-  //   getItem("Option 1", "1", <PieChartOutlined />),
-  //   getItem("Option 2", "2", <DesktopOutlined />),
-  getItem("Leave", "sub1", <CalendarOutlined />, [
-    getItem("My Leave Request", "3"),
-    getItem("Leave approval", "4"),
-    getItem("Agenda", "5"),
-  ]),
-  //   getItem("Team", "sub2", <TeamOutlined />, [
-  //     getItem("Team 1", "6"),
-  //     getItem("Team 2", "8"),
-  //   ]),
-  //   getItem("Files", "9", <FileOutlined />),
+  {
+    key: "sub1",
+    icon: <CalendarOutlined />,
+    label: "Leave",
+    children: [
+      { key: "my-leave-request", label: "My Leave Request" },
+      { key: "leave-approval", label: "Leave Approval" },
+      { key: "agenda", label: "Agenda" },
+    ],
+  },
 ];
 
 export default function HomeTemplate() {
@@ -72,11 +70,15 @@ export default function HomeTemplate() {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
 
+  const handleMenuClick = ({ key }) => {
+    navigate(`/${key}`);
+  };
+
   const navigate = useNavigate();
   const dispatch = useDispatch();
   let userInfo = JSON.parse(localStorage.getItem(USER_INFO));
 
-  const handleMenuClick = (e) => {
+  const handleUserMenuClick = (e) => {
     if (e.key === "logout") {
       try {
         dispatch(logoutUser());
@@ -84,6 +86,15 @@ export default function HomeTemplate() {
       } catch (error) {}
     }
   };
+
+  const currentPath = location.pathname.substring(1);
+  const selectedKeys = [currentPath];
+
+  const pathSnippets = location.pathname.split("/").filter((i) => i);
+  const breadcrumbItems = [
+    "Home",
+    ...pathSnippets.map((path) => path.replace("-", " ")),
+  ];
 
   return (
     <Layout
@@ -105,6 +116,8 @@ export default function HomeTemplate() {
           defaultSelectedKeys={["1"]}
           mode="inline"
           items={items}
+          onClick={handleMenuClick}
+          selectedKeys={selectedKeys}
         />
       </Sider>
       <Layout>
@@ -121,7 +134,7 @@ export default function HomeTemplate() {
             }}
           >
             <Dropdown
-              menu={{ items: userMenuItems, onClick: handleMenuClick }}
+              menu={{ items: userMenuItems, onClick: handleUserMenuClick }}
               trigger={["click"]}
             >
               <Button type="text">
@@ -138,15 +151,12 @@ export default function HomeTemplate() {
             margin: "0 16px",
           }}
         >
-          <Breadcrumb
-            style={{
-              margin: "16px 0",
-            }}
-          >
-            <Breadcrumb.Item>Home</Breadcrumb.Item>
-            <Breadcrumb.Item>Leave</Breadcrumb.Item>
-            <Breadcrumb.Item>My Leave</Breadcrumb.Item>
+          <Breadcrumb style={{ margin: "16px 0" }}>
+            {breadcrumbItems.map((item, index) => (
+              <Breadcrumb.Item key={index}>{item}</Breadcrumb.Item>
+            ))}
           </Breadcrumb>
+
           <div
             style={{
               padding: 24,

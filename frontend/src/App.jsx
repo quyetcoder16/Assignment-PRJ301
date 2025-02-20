@@ -16,7 +16,7 @@ function App() {
         <Routes>
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<HomeTemplate />}>
-              <Route path="/leave-request" element={<LeaveRequest />} />
+              <Route path="/my-leave-request" element={<LeaveRequest />} />
             </Route>
           </Route>
           <Route path="/login" element={<LoginPage />} />
