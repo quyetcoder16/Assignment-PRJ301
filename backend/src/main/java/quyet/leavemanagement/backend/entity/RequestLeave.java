@@ -20,19 +20,19 @@ public class RequestLeave {
     @Column(name = "id_request")
     int idRequest;
 
-    @Column(name = "title",columnDefinition = "NVARCHAR(255)")
+    @Column(name = "title", columnDefinition = "NVARCHAR(255)")
     String title;
 
-    @Column(name = "reason",columnDefinition = "NVARCHAR(1000)")
+    @Column(name = "reason", columnDefinition = "NVARCHAR(1000)")
     String reason;
 
-    @Column(name = "from_date")
+    @Column(name = "from_date", nullable = false)
     LocalDate fromDate;
 
-    @Column(name = "to_date")
+    @Column(name = "to_date", nullable = false)
     LocalDate toDate;
 
-    @Column(name = "note_process",columnDefinition = "NVARCHAR(1000)")
+    @Column(name = "note_process", columnDefinition = "NVARCHAR(1000)")
     String noteProcess;
 
     @ManyToOne
@@ -40,11 +40,11 @@ public class RequestLeave {
     TypeLeave typeLeave;
 
     @ManyToOne
-    @JoinColumn(name = "status_id", referencedColumnName = "status_id")
+    @JoinColumn(name = "status_id", referencedColumnName = "status_id", nullable = false)
     RequestStatus requestStatus;
 
     @ManyToOne
-    @JoinColumn(name = "user_created_id", referencedColumnName = "user_id")
+    @JoinColumn(name = "user_created_id", referencedColumnName = "user_id", nullable = false)
     User userCreated;
 
     @ManyToOne

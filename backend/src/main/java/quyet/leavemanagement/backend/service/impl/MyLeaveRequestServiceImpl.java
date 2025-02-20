@@ -10,6 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import quyet.leavemanagement.backend.dto.request.my_leave_request.CreateLeaveRequest;
 import quyet.leavemanagement.backend.dto.response.leave_request.LeaveRequestResponse;
+import quyet.leavemanagement.backend.dto.response.my_leave_request.MyLeaveRequestResponse;
 import quyet.leavemanagement.backend.entity.RequestLeave;
 import quyet.leavemanagement.backend.entity.RequestStatus;
 import quyet.leavemanagement.backend.entity.TypeLeave;
@@ -23,6 +24,7 @@ import quyet.leavemanagement.backend.repository.UserRepository;
 import quyet.leavemanagement.backend.service.MyLeaveRequestService;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -36,8 +38,28 @@ public class MyLeaveRequestServiceImpl implements MyLeaveRequestService {
     TypeLeaveRepository typeLeaveRepository;
 
     @Override
-    public List<LeaveRequestResponse> getAllMyLeaveRequests() {
-        return List.of();
+    @PreAuthorize("hasAuthority('VIEW_MY_REQUEST')")
+    public List<MyLeaveRequestResponse> getAllMyLeaveRequests() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = Long.valueOf(auth.getName());
+        User user = userRepository.findByUserId(userId).orElseThrow(() ->
+                new AppException(ErrorCode.USER_NOT_FOUND));
+        List<MyLeaveRequestResponse> leaveRequestResponses = requestLeaveRepository.findAllByUserCreated(user).stream()
+                .map(requestLeave ->
+                        MyLeaveRequestResponse.builder()
+                                .idRequest(requestLeave.getIdRequest())
+                                .title(requestLeave.getTitle())
+                                .reason(requestLeave.getReason())
+                                .nameRequestStatus(requestLeave.getRequestStatus().getStatusName())
+                                .fromDate(requestLeave.getFromDate())
+                                .toDate(requestLeave.getToDate())
+                                .nameTypeLeave(requestLeave.getTypeLeave().getNameTypeLeave())
+                                .nameUserCreated(requestLeave.getUserCreated().getFullName())
+                                .nameUserProcess((requestLeave.getUserProcess() != null) ? (requestLeave.getUserProcess().getFullName()) : "")
+                                .noteProcess(requestLeave.getNoteProcess())
+                                .build())
+                .toList();
+        return leaveRequestResponses;
     }
 
     @Override
