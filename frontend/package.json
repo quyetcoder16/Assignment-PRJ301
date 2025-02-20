@@ -17,6 +17,7 @@
     "@mui/material": "^6.4.3",
     "@reduxjs/toolkit": "^2.5.1",
     "antd": "^5.24.0",
+    "axios": "^1.7.9",
     "frontend": "file:",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

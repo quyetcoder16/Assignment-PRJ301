@@ -16,6 +16,7 @@ import quyet.leavemanagement.backend.dto.request.auth.LogoutRequest;
 import quyet.leavemanagement.backend.dto.request.auth.RefreshTokenRequest;
 import quyet.leavemanagement.backend.dto.response.auth.LoginResponse;
 import quyet.leavemanagement.backend.dto.response.auth.RefreshTokenResponse;
+import quyet.leavemanagement.backend.dto.response.user.UserResponse;
 import quyet.leavemanagement.backend.entity.InvalidatedToken;
 import quyet.leavemanagement.backend.entity.User;
 import quyet.leavemanagement.backend.exception.AppException;
@@ -52,6 +53,10 @@ public class AuthServiceImpl implements AuthService {
         return LoginResponse.builder()
                 .accessToken(jwtService.generateAccessToken(user))
                 .refreshToken(jwtService.generateRefreshToken(user))
+                .user(UserResponse.builder()
+                        .email(user.getEmail())
+                        .fullName(user.getFullName())
+                        .build())
                 .build();
     }
 

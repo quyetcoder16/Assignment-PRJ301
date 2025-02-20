@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TextField, Button, Checkbox, FormControlLabel } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
 import FacebookIcon from "@mui/icons-material/Facebook";
@@ -8,6 +8,12 @@ import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import "../../assets/styles/LoginPage.css";
 import logo from "../../assets/img/logo.png";
+import { loginUser } from "../../redux/reducer/authReducer";
+import {
+  ACCESS_TOKEN,
+  REFRESH_TOKEN,
+  USER_INFO,
+} from "../../utils/setting/config";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -16,6 +22,15 @@ const LoginPage = () => {
   const [passwordError, setPasswordError] = useState("");
   const dispatch = useDispatch();
   const navigate = useNavigate();
+
+  const accessToken = localStorage.getItem(ACCESS_TOKEN);
+  const refreshToken = localStorage.getItem(REFRESH_TOKEN);
+  const userInfo = localStorage.getItem(USER_INFO);
+  useEffect(() => {
+    if (accessToken && refreshToken && userInfo) {
+      navigate("/");
+    }
+  }, [accessToken, refreshToken, userInfo]);
 
   const validateEmail = (email) => {
     const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -45,16 +60,11 @@ const LoginPage = () => {
     }
 
     if (!valid) return;
-    // try {
-    //   const response = await loginUser({ email, password });
-    //   const { token, user } = response.data;
-    //   localStorage.setItem('token', token);
-    //   localStorage.setItem('user', JSON.stringify(user));
-    //   dispatch(loginSuccess({ token, user }));
-    //   navigate('/');
-    // } catch (error) {
-    //   console.error('Đăng nhập thất bại', error);
-    // }
+
+    try {
+      await dispatch(loginUser(email, password));
+      navigate("/");
+    } catch (error) {}
   };
 
   return (

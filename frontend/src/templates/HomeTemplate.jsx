@@ -47,6 +47,7 @@ function getItem(label, key, icon, children) {
 }
 
 import logo from "../assets/img/logo.png";
+import { USER_INFO } from "../utils/setting/config";
 
 const items = [
   //   getItem("Option 1", "1", <PieChartOutlined />),
@@ -70,6 +71,7 @@ export default function HomeTemplate() {
   } = theme.useToken();
 
   const navigate = useNavigate();
+  let userInfo = JSON.parse(localStorage.getItem(USER_INFO));
 
   const handleMenuClick = (e) => {
     if (e.key === "logout") {
@@ -121,7 +123,7 @@ export default function HomeTemplate() {
               <Button type="text">
                 <Space>
                   <Avatar size="large" icon={<UserOutlined />} />
-                  Hi, Dương Xuân Quyết <DownOutlined />
+                  Hi, {userInfo?.fullName} <DownOutlined />
                 </Space>
               </Button>
             </Dropdown>

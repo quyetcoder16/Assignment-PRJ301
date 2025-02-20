@@ -2,6 +2,7 @@ package quyet.leavemanagement.backend.dto.response.auth;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import quyet.leavemanagement.backend.dto.response.user.UserResponse;
 
 @Data
 @AllArgsConstructor
@@ -11,4 +12,5 @@ import lombok.experimental.FieldDefaults;
 public class LoginResponse {
     String accessToken;
     String refreshToken;
+    UserResponse user;
 }
