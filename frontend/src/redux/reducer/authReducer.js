@@ -8,7 +8,7 @@ import {
   USER_INFO,
 } from "../../utils/setting/config";
 import { hideLoading, setLoading } from "./loadingReducer";
-import { authServicer } from "../../service/authService";
+import { authService } from "../../service/authService";
 import { showNotification } from "./notificationReducer";
 
 const initialState = {
@@ -41,7 +41,7 @@ export const loginUser = (email, password) => {
   return async (dispatch) => {
     dispatch(setLoading());
     try {
-      const { data, status } = await authServicer.loginAPI(email, password);
+      const { data, status } = await authService.loginAPI(email, password);
       if (
         status == HTTP_STATUS_CODE.SUCCESS &&
         data?.statusCode == STATUS_CODE.SUCCESS
@@ -82,7 +82,7 @@ export const logoutUser = () => {
     try {
       const { accessToken, refreshToken } = getState().authReducer;
 
-      await authServicer.logoutAPI(accessToken, refreshToken);
+      await authService.logoutAPI(accessToken, refreshToken);
 
       localStorage.removeItem(ACCESS_TOKEN);
       localStorage.removeItem(REFRESH_TOKEN);

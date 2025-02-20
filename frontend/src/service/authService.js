@@ -23,7 +23,19 @@ const logoutAPI = async (accessToken, refreshToken) => {
   });
 };
 
-export const authServicer = {
+const refreshTokenAPI = async (accessToken, refreshToken) => {
+  return await axios({
+    url: `${DOMAIN}/auth/refresh_token`,
+    method: "POST",
+    data: {
+      accessToken,
+      refreshToken,
+    },
+  });
+};
+
+export const authService = {
   loginAPI,
   logoutAPI,
+  refreshTokenAPI,
 };

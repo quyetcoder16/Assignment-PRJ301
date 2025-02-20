@@ -21,5 +21,5 @@ server:
 jwt:
   access-token-signer-key: ${ACCESS_TOKEN:dbVkYCHQIBx33giGxnJic7noT0eagNcR}
   refresh-token-signer-key: ${REFRESH_TOKEN:Wu8w4pkiVmErS9Z9Loel7tMBM7f3VFjD}
-  access-token-duration: ${ACCESS_TOKEN_DURATION:540} # in second
+  access-token-duration: ${ACCESS_TOKEN_DURATION:10} # in second
   refresh-token-duration: ${REFRESH_TOKEN:600} # in second
