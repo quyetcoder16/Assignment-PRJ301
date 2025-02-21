@@ -31,7 +31,9 @@ const columns = [
     dataIndex: "nameRequestStatus",
     key: "status",
     render: (status) => {
-      let color = status === "In progress" ? "blue" : "green";
+      let color = "red";
+      if (status === "In progress") color = "blue";
+      if (status === "Approved") color = "green";
       return <Tag color={color}>{status}</Tag>;
     },
   },
@@ -58,7 +60,7 @@ const LeaveRequest = () => {
 
   return (
     <div>
-      <div className="container">
+      <div className="container w-100">
         <h1>My Leave Requests</h1>
         <Table
           columns={columns}

@@ -15,7 +15,7 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Permission {
     @Id
-    @Column(name = "permission_name", columnDefinition = "NVARCHAR(255)")
+    @Column(name = "permission_name")
     String permissionName;
 
     @Column(name = "description", length = 1000, columnDefinition = "NVARCHAR(1000)")

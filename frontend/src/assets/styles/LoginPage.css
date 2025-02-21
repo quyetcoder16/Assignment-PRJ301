@@ -1,5 +1,4 @@
-/* styles/LoginPage.css */
-body {
+/* body {
   font-family: "Roboto", sans-serif;
   background-color: #f0f4f9;
   margin: 0;
@@ -7,7 +6,7 @@ body {
   justify-content: center;
   align-items: center;
   height: 100vh;
-}
+} */
 
 .login-page {
   display: flex;
