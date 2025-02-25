@@ -48,5 +48,10 @@ public class User {
     @OneToMany(mappedBy = "userProcess")
     List<RequestLeave> listRequestLeaveProcessed;
 
+    public boolean hasRole(String roleName) {
+        return this.listUserRole.stream()
+                .map(userRole -> userRole.getRole().getRoleName())
+                .anyMatch(name -> name.equals(roleName));
+    }
 
 }

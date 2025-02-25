@@ -18,7 +18,9 @@ import quyet.leavemanagement.backend.dto.response.auth.LoginResponse;
 import quyet.leavemanagement.backend.dto.response.auth.RefreshTokenResponse;
 import quyet.leavemanagement.backend.dto.response.user.UserResponse;
 import quyet.leavemanagement.backend.entity.InvalidatedToken;
+import quyet.leavemanagement.backend.entity.Role;
 import quyet.leavemanagement.backend.entity.User;
+import quyet.leavemanagement.backend.entity.UserRole;
 import quyet.leavemanagement.backend.exception.AppException;
 import quyet.leavemanagement.backend.exception.ErrorCode;
 import quyet.leavemanagement.backend.repository.InvalidatedTokenRepository;
@@ -28,7 +30,9 @@ import quyet.leavemanagement.backend.service.JwtService;
 
 import java.text.ParseException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -50,6 +54,20 @@ public class AuthServiceImpl implements AuthService {
             throw new AppException(ErrorCode.EMAIL_OR_PASSWORD_NOT_MATCH);
         }
 
+        List<String> permissions = new ArrayList<>();
+        List<UserRole> listUserRole = user.getListUserRole();
+        if (listUserRole != null && listUserRole.size() > 0) {
+            listUserRole.forEach(userRole -> {
+                Role role = userRole.getRole();
+                if (role != null) {
+                    role.getListRolePermission().forEach(rolePermission -> {
+                        permissions.add(rolePermission.getPermission().getPermissionName());
+                    });
+                }
+            });
+        }
+
+
         return LoginResponse.builder()
                 .accessToken(jwtService.generateAccessToken(user))
                 .refreshToken(jwtService.generateRefreshToken(user))
@@ -57,6 +75,7 @@ public class AuthServiceImpl implements AuthService {
                         .userId(user.getUserId())
                         .email(user.getEmail())
                         .fullName(user.getFullName())
+                        .permissions(permissions)
                         .build())
                 .build();
     }

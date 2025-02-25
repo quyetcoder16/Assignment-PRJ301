@@ -3,10 +3,12 @@ import { myLeaveRequestService } from "../../service/myLeaveRequestService";
 import { hideLoading, setLoading } from "./loadingReducer";
 import { showNotification } from "./notificationReducer";
 import { NOTIFICATION_TYPE } from "../../utils/setting/config";
+import { leaveApprovalService } from "../../service/leaveApprovalService";
 
 const initialState = {
   leaveRequests: [],
   leaveTypes: [],
+  leaveApprovals: [],
 };
 
 const leaveRequestReducer = createSlice({
@@ -19,10 +21,14 @@ const leaveRequestReducer = createSlice({
     setLeaveTypes: (state, action) => {
       state.leaveTypes = action.payload;
     },
+    setLeaveApprovals: (state, action) => {
+      state.leaveApprovals = action.payload;
+    },
   },
 });
 
-export const { setLeaveRequests, setLeaveTypes } = leaveRequestReducer.actions;
+export const { setLeaveRequests, setLeaveTypes, setLeaveApprovals } =
+  leaveRequestReducer.actions;
 
 // redux thunk
 export const getAllMyLeaveRequest = () => {
@@ -32,12 +38,12 @@ export const getAllMyLeaveRequest = () => {
       const response = await myLeaveRequestService.getAllMyLeaveRequestAPI();
       if (response.data.statusCode === 1000) {
         dispatch(setLeaveRequests(response?.data?.data));
-        dispatch(
-          showNotification({
-            type: NOTIFICATION_TYPE.success,
-            message: "Get Leave Requests successfully",
-          })
-        );
+        // dispatch(
+        //   showNotification({
+        //     type: NOTIFICATION_TYPE.success,
+        //     message: "Get Leave Requests successfully",
+        //   })
+        // );
       }
     } catch (error) {
       const data = error?.response?.data;
@@ -111,6 +117,25 @@ export const createLeaveRequest = (requestData) => {
       dispatch(hideLoading());
     }
   };
+};
+
+export const getAllLeaveApprovals = () => async (dispatch) => {
+  dispatch(setLoading());
+  try {
+    const response = await leaveApprovalService.getAllSubLeaveRequest();
+    if (response.data.statusCode === 1000) {
+      dispatch(setLeaveApprovals(response.data.data));
+    }
+  } catch (error) {
+    dispatch(
+      showNotification({
+        type: NOTIFICATION_TYPE.error,
+        message: "Failed to fetch leave approvals!",
+      })
+    );
+  } finally {
+    dispatch(hideLoading());
+  }
 };
 
 export default leaveRequestReducer.reducer;

@@ -3,6 +3,8 @@ package quyet.leavemanagement.backend.dto.response.user;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.util.List;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -12,4 +14,5 @@ public class UserResponse {
     Long userId;
     String email;
     String fullName;
+    List<String> permissions;
 }

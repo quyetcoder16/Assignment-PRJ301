@@ -6,6 +6,7 @@ import LeaveRequest from "./pages/LeaveRequest/LeaveRequest";
 import Loading from "./components/GlobalSetting/Loading";
 import NotificationHandler from "./components/Notification/NotificationHandler";
 import ProtectedRoute from "./routes/ProtectedRoute";
+import LeaveApproval from "./pages/leave_approval/LeaveApproval";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route path="/" element={<HomeTemplate />}>
               <Route path="/my-leave-request" element={<LeaveRequest />} />
+              <Route path="/leave-approval" element={<LeaveApproval />} />
             </Route>
           </Route>
           <Route path="/login" element={<LoginPage />} />
