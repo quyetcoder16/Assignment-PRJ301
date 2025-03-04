@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
   CalendarOutlined,
+  LogoutOutlined,
   //   DesktopOutlined,
   //   FileOutlined,
   //   PieChartOutlined,
@@ -26,13 +27,13 @@ import "../assets/styles/HomeTemplate.css";
 const userMenuItems = [
   {
     label: "Profile",
-    key: "1",
+    key: "profile",
     icon: <UserOutlined />,
   },
   {
     label: "Logout",
     key: "logout",
-    icon: <UserOutlined />,
+    icon: <LogoutOutlined />,
     danger: true,
   },
 ];
@@ -84,6 +85,8 @@ export default function HomeTemplate() {
         dispatch(logoutUser());
         navigate("/login");
       } catch (error) {}
+    } else if (e.key === "profile") {
+      navigate("/");
     }
   };
 

@@ -11,9 +11,13 @@ import {
 } from "antd";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-
 import dayjs from "dayjs";
-import { getAllLeaveApprovals } from "../../redux/reducer/leaveRequestReducer";
+import {
+  getAllLeaveApprovals,
+  // approveLeaveRequest,
+  // rejectLeaveRequest,
+  // editLeaveRequestStatus,
+} from "../../redux/reducer/leaveRequestReducer";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
@@ -21,61 +25,88 @@ const { RangePicker } = DatePicker;
 const LeaveApproval = () => {
   const dispatch = useDispatch();
   const { leaveApprovals } = useSelector((state) => state.leaveRequestReducer);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [editingRequest, setEditingRequest] = useState(null);
-  const [form] = Form.useForm();
+
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [actionType, setActionType] = useState("");
+  const [filter, setFilter] = useState({
+    creator: "",
+    dateRange: [],
+    status: "",
+  });
+
+  const [formConfirm] = Form.useForm();
+  const [formEdit] = Form.useForm();
 
   useEffect(() => {
     dispatch(getAllLeaveApprovals());
   }, [dispatch]);
 
-  // const handleApprove = (id) => {
-  //   dispatch(approveLeaveRequest(id)).then(() => {
-  //     message.success("Leave request approved!");
-  //     dispatch(getAllLeaveApprovals());
-  //   });
-  // };
+  const openConfirmModal = (record, type) => {
+    setSelectedRequest(record);
+    setActionType(type);
+    formConfirm.resetFields();
+    setIsConfirmModalOpen(true);
+  };
 
-  // const handleReject = (id) => {
-  //   dispatch(rejectLeaveRequest(id)).then(() => {
-  //     message.success("Leave request rejected!");
-  //     dispatch(getAllLeaveApprovals());
-  //   });
-  // };
+  const handleConfirmAction = async (values) => {
+    const requestData = {
+      idRequest: selectedRequest.idRequest,
+      noteProcess: values.noteProcess,
+    };
 
-  // const handleEdit = (record) => {
-  //   setEditingRequest(record);
-  //   form.setFieldsValue({
-  //     title: record.title,
-  //     reason: record.reason,
-  //     dateRange: [dayjs(record.fromDate), dayjs(record.toDate)],
-  //     idTypeRequest: record.idTypeRequest,
-  //   });
-  //   setIsModalOpen(true);
-  // };
+    if (actionType === "approve") {
+      // await dispatch(approveLeaveRequest(requestData));
+      message.success("Leave request approved!");
+    } else {
+      // await dispatch(rejectLeaveRequest(requestData));
+      message.success("Leave request rejected!");
+    }
 
-  // const handleSaveEdit = async (values) => {
-  //   const requestData = {
-  //     ...editingRequest,
-  //     title: values.title,
-  //     reason: values.reason,
-  //     fromDate: values.dateRange[0].format("YYYY-MM-DD"),
-  //     toDate: values.dateRange[1].format("YYYY-MM-DD"),
-  //     idTypeRequest: values.idTypeRequest,
-  //   };
-  //   await dispatch(editLeaveRequest(requestData));
-  //   message.success("Leave request updated!");
-  //   setIsModalOpen(false);
-  //   dispatch(getAllLeaveApprovals());
-  // };
+    setIsConfirmModalOpen(false);
+    dispatch(getAllLeaveApprovals());
+  };
+
+  const openEditModal = (record) => {
+    setSelectedRequest(record);
+    formEdit.setFieldsValue({
+      status: record.nameRequestStatus,
+      noteProcess: "",
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const handleEditStatus = async (values) => {
+    const requestData = {
+      idRequest: selectedRequest.idRequest,
+      newStatus: values.status,
+      noteProcess: values.noteProcess,
+    };
+
+    // await dispatch(editLeaveRequestStatus(requestData));
+    message.success("Leave request status updated!");
+
+    setIsEditModalOpen(false);
+    dispatch(getAllLeaveApprovals());
+  };
+
+  const filteredData = leaveApprovals.filter((item) => {
+    return (
+      (!filter.creator || item.nameUserCreated.includes(filter.creator)) &&
+      (!filter.status || item.nameRequestStatus === filter.status) &&
+      (!filter.dateRange.length ||
+        (dayjs(item.fromDate).isAfter(dayjs(filter.dateRange[0]), "day") &&
+          dayjs(item.toDate).isBefore(dayjs(filter.dateRange[1]), "day")))
+    );
+  });
 
   const columns = [
     {
-      title: "Created By ",
+      title: "Created By",
       dataIndex: "nameUserCreated",
       key: "nameUserCreated",
     },
-
     { title: "Title", dataIndex: "title", key: "title" },
     { title: "Reason", dataIndex: "reason", key: "reason" },
     {
@@ -115,20 +146,21 @@ const LeaveApproval = () => {
       render: (record) => {
         const currentDate = dayjs();
         const fromDate = dayjs(record.fromDate);
+
         return (
           <>
             {record.nameRequestStatus === "In progress" && (
               <>
                 <Button
                   type="primary"
-                  // onClick={() => handleApprove(record.idRequest)}
+                  onClick={() => openConfirmModal(record, "approve")}
                 >
                   Approve
                 </Button>
                 <Button
                   danger
                   className="ml-2"
-                  // onClick={() => handleReject(record.idRequest)}
+                  onClick={() => openConfirmModal(record, "reject")}
                 >
                   Reject
                 </Button>
@@ -136,10 +168,8 @@ const LeaveApproval = () => {
             )}
             {(record.nameRequestStatus === "Approved" ||
               record.nameRequestStatus === "Rejected") &&
-              currentDate.isBefore(fromDate.add(1, "day")) && (
-                <Button
-                // onClick={() => handleEdit(record)}
-                >
+              currentDate.isBefore(fromDate) && (
+                <Button className="ml-2" onClick={() => openEditModal(record)}>
                   Edit
                 </Button>
               )}
@@ -151,45 +181,93 @@ const LeaveApproval = () => {
 
   return (
     <div className="container mt-4">
-      <h1 className="text-center">Leave Approvals</h1>
-      <Table columns={columns} dataSource={leaveApprovals} rowKey="idRequest" />
+      <h1>Leave Approvals</h1>
+
+      <div
+        className="mb-3"
+        style={{ display: "flex", gap: "10px", alignItems: "center" }}
+      >
+        <Input
+          placeholder="Search by Creator"
+          value={filter.creator}
+          onChange={(e) => setFilter({ ...filter, creator: e.target.value })}
+          style={{ width: "200px" }}
+        />
+        <RangePicker
+          format="DD-MM-YYYY"
+          onChange={(dates) => setFilter({ ...filter, dateRange: dates })}
+        />
+        <Select
+          placeholder="Select Status"
+          value={filter.status}
+          onChange={(value) => setFilter({ ...filter, status: value })}
+          allowClear
+          style={{ width: "150px" }}
+        >
+          <Option value="In progress">In Progress</Option>
+          <Option value="Approved">Approved</Option>
+          <Option value="Rejected">Rejected</Option>
+        </Select>
+      </div>
+
+      <Table columns={columns} dataSource={filteredData} rowKey="idRequest" />
+
+      {/* Modal Confirm Approve/Reject */}
       <Modal
-        title="Edit Leave Request"
-        open={isModalOpen}
-        onCancel={() => setIsModalOpen(false)}
+        title={
+          actionType === "approve"
+            ? "Approve Leave Request"
+            : "Reject Leave Request"
+        }
+        open={isConfirmModalOpen}
+        onCancel={() => setIsConfirmModalOpen(false)}
         footer={null}
       >
         <Form
-          form={form}
+          form={formConfirm}
           layout="vertical"
-          // onFinish={handleSaveEdit}
+          onFinish={handleConfirmAction}
         >
-          <Form.Item name="title" label="Title" rules={[{ required: true }]}>
-            <Input placeholder="Enter title" />
-          </Form.Item>
-          <Form.Item name="reason" label="Reason" rules={[{ required: true }]}>
-            <Input.TextArea placeholder="Enter reason" rows={3} />
-          </Form.Item>
           <Form.Item
-            name="dateRange"
-            label="Date Range"
-            rules={[{ required: true }]}
+            name="noteProcess"
+            label="Note"
+            rules={[{ required: true, message: "Please enter a note" }]}
           >
-            <RangePicker format="DD-MM-YYYY" />
+            <Input.TextArea rows={3} />
           </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">
+              Confirm
+            </Button>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Modal Edit Status */}
+      <Modal
+        title="Edit Leave Request Status"
+        open={isEditModalOpen}
+        onCancel={() => setIsEditModalOpen(false)}
+        footer={null}
+      >
+        <Form form={formEdit} layout="vertical" onFinish={handleEditStatus}>
           <Form.Item
-            name="idTypeRequest"
-            label="Type of Leave"
-            rules={[{ required: true }]}
+            name="status"
+            label="Status"
+            rules={[{ required: true, message: "Please select a status" }]}
           >
-            <Select placeholder="Select leave type">
-              {/* Giả sử leave types được lưu ở store */}
-              {leaveApprovals.map((type) => (
-                <Option key={type.id} value={type.id}>
-                  {type.nameTypeLeave}
-                </Option>
-              ))}
+            <Select>
+              <Option value="Approved">Approved</Option>
+              <Option value="Rejected">Rejected</Option>
+              <Option value="In progress">In Progress</Option>
             </Select>
+          </Form.Item>
+          <Form.Item
+            name="noteProcess"
+            label="Note"
+            rules={[{ required: true, message: "Please enter a note" }]}
+          >
+            <Input.TextArea rows={3} />
           </Form.Item>
           <Form.Item>
             <Button type="primary" htmlType="submit">

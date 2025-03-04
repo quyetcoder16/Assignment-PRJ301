@@ -7,6 +7,8 @@ import Loading from "./components/GlobalSetting/Loading";
 import NotificationHandler from "./components/Notification/NotificationHandler";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import LeaveApproval from "./pages/leave_approval/LeaveApproval";
+import AgendaEmployeeStatus from "./pages/agenda/AgendaEmployeeStatus";
+import Profile from "./pages/profile/Profile";
 
 function App() {
   return (
@@ -19,6 +21,8 @@ function App() {
             <Route path="/" element={<HomeTemplate />}>
               <Route path="/my-leave-request" element={<LeaveRequest />} />
               <Route path="/leave-approval" element={<LeaveApproval />} />
+              <Route path="/agenda" element={<AgendaEmployeeStatus />} />
+              <Route path="/" element={<Profile />} />
             </Route>
           </Route>
           <Route path="/login" element={<LoginPage />} />
