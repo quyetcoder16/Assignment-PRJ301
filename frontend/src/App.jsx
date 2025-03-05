@@ -9,6 +9,8 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import LeaveApproval from "./pages/leave_approval/LeaveApproval";
 import AgendaEmployeeStatus from "./pages/agenda/AgendaEmployeeStatus";
 import Profile from "./pages/profile/Profile";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import EmployeeManagement from "./pages/employee_management/EmployeeManagement";
 
 function App() {
   return (
@@ -23,9 +25,14 @@ function App() {
               <Route path="/leave-approval" element={<LeaveApproval />} />
               <Route path="/agenda" element={<AgendaEmployeeStatus />} />
               <Route path="/" element={<Profile />} />
+              <Route
+                path="/employee-management"
+                element={<EmployeeManagement />}
+              />
             </Route>
           </Route>
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Router>
