@@ -27,10 +27,10 @@ public class Department {
     String description;
 
     @OneToOne
-    @JoinColumn(name = "manager_id", referencedColumnName = "user_id", unique = true)
-    User manager;
+    @JoinColumn(name = "manager_id", referencedColumnName = "emp_id", unique = true)
+    Employee manager;
 
     @OneToMany(mappedBy = "department")
-    List<User> listUser;
+    List<Employee> listEmployee;
 
 }

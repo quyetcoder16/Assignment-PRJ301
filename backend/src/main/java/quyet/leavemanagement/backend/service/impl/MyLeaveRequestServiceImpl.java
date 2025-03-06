@@ -40,71 +40,73 @@ public class MyLeaveRequestServiceImpl implements MyLeaveRequestService {
     @Override
     @PreAuthorize("hasAuthority('VIEW_MY_REQUEST')")
     public List<MyLeaveRequestResponse> getAllMyLeaveRequests() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Long userId = Long.valueOf(auth.getName());
-        User user = userRepository.findByUserId(userId).orElseThrow(() ->
-                new AppException(ErrorCode.USER_NOT_FOUND));
-        List<MyLeaveRequestResponse> leaveRequestResponses = requestLeaveRepository.findAllByUserCreated(user).stream()
-                .map(requestLeave ->
-                        MyLeaveRequestResponse.builder()
-                                .idRequest(requestLeave.getIdRequest())
-                                .title(requestLeave.getTitle())
-                                .reason(requestLeave.getReason())
-                                .nameRequestStatus(requestLeave.getRequestStatus().getStatusName())
-                                .fromDate(requestLeave.getFromDate())
-                                .toDate(requestLeave.getToDate())
-                                .nameTypeLeave(requestLeave.getTypeLeave().getNameTypeLeave())
-                                .nameUserCreated(requestLeave.getUserCreated().getFullName())
-                                .nameUserProcess((requestLeave.getUserProcess() != null) ? (requestLeave.getUserProcess().getFullName()) : "")
-                                .noteProcess(requestLeave.getNoteProcess())
-                                .build())
-                .toList();
-        return leaveRequestResponses;
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//        Long userId = Long.valueOf(auth.getName());
+//        User user = userRepository.findByUserId(userId).orElseThrow(() ->
+//                new AppException(ErrorCode.USER_NOT_FOUND));
+//        List<MyLeaveRequestResponse> leaveRequestResponses = requestLeaveRepository.findAllByUserCreated(user).stream()
+//                .map(requestLeave ->
+//                        MyLeaveRequestResponse.builder()
+//                                .idRequest(requestLeave.getIdRequest())
+//                                .title(requestLeave.getTitle())
+//                                .reason(requestLeave.getReason())
+//                                .nameRequestStatus(requestLeave.getRequestStatus().getStatusName())
+//                                .fromDate(requestLeave.getFromDate())
+//                                .toDate(requestLeave.getToDate())
+//                                .nameTypeLeave(requestLeave.getTypeLeave().getNameTypeLeave())
+////                                .nameUserCreated(requestLeave.getUserCreated().getFullName())
+////                                .nameUserProcess((requestLeave.getUserProcess() != null) ? (requestLeave.getUserProcess().getFullName()) : "")
+//                                .noteProcess(requestLeave.getNoteProcess())
+//                                .build())
+//                .toList();
+//        return leaveRequestResponses;
+        return null;
     }
 
     @Override
     @Transactional
     @PreAuthorize("hasAuthority('CREATED_MY_REQUEST')")
     public void createMyLeaveRequest(CreateLeaveRequest createLeaveRequest) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Long userId = Long.valueOf(auth.getName());
-        LocalDate today = LocalDate.now();
-        if (createLeaveRequest.getFromDate().isBefore(today)) {
-            throw new AppException(ErrorCode.START_DATE_INVALID);
-        }
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//        Long userId = Long.valueOf(auth.getName());
+//        LocalDate today = LocalDate.now();
+//        if (createLeaveRequest.getFromDate().isBefore(today)) {
+//            throw new AppException(ErrorCode.START_DATE_INVALID);
+//        }
+//
+//        if (createLeaveRequest.getToDate().isBefore(createLeaveRequest.getFromDate())) {
+//            throw new AppException(ErrorCode.END_DATE_INVALID);
+//        }
+//
+//        User user = userRepository.findByUserId(userId).orElseThrow(() ->
+//                new AppException(ErrorCode.USER_NOT_FOUND));
+//
+//
+//        // check date over lapping
+//        boolean isDateOverlapping = requestLeaveRepository.existsByUserCreatedAndFromDateLessThanEqualAndToDateGreaterThanEqual(
+//                user, createLeaveRequest.getToDate(), createLeaveRequest.getFromDate()
+//        );
+//
+//        if (isDateOverlapping) {
+//            throw new AppException(ErrorCode.LEAVE_DATE_ALREADY_EXISTS);
+//        }
+//        // set status is in process
+//        RequestStatus requestStatus = requestStatusRepository.findByStatusId(1).orElseThrow(() ->
+//                new AppException(ErrorCode.REQUEST_STATUS_NOT_FOUND));
+//
+//        TypeLeave typeLeave = typeLeaveRepository.findById(createLeaveRequest.getIdTypeRequest()).orElseThrow(() ->
+//                new AppException(ErrorCode.TYPE_LEAVE_NOT_FOUND));
+//
+//        RequestLeave requestLeave = RequestLeave.builder()
+//                .title(createLeaveRequest.getTitle())
+//                .reason(createLeaveRequest.getReason())
+//                .fromDate(createLeaveRequest.getFromDate())
+//                .toDate(createLeaveRequest.getToDate())
+//                .requestStatus(requestStatus)
+//                .typeLeave(typeLeave)
+////                .userCreated(user)
+//                .build();
+//        requestLeaveRepository.save(requestLeave);
 
-        if (createLeaveRequest.getToDate().isBefore(createLeaveRequest.getFromDate())) {
-            throw new AppException(ErrorCode.END_DATE_INVALID);
-        }
-
-        User user = userRepository.findByUserId(userId).orElseThrow(() ->
-                new AppException(ErrorCode.USER_NOT_FOUND));
-
-
-        // check date over lapping
-        boolean isDateOverlapping = requestLeaveRepository.existsByUserCreatedAndFromDateLessThanEqualAndToDateGreaterThanEqual(
-                user, createLeaveRequest.getToDate(), createLeaveRequest.getFromDate()
-        );
-
-        if (isDateOverlapping) {
-            throw new AppException(ErrorCode.LEAVE_DATE_ALREADY_EXISTS);
-        }
-        // set status is in process
-        RequestStatus requestStatus = requestStatusRepository.findByStatusId(1).orElseThrow(() ->
-                new AppException(ErrorCode.REQUEST_STATUS_NOT_FOUND));
-
-        TypeLeave typeLeave = typeLeaveRepository.findById(createLeaveRequest.getIdTypeRequest()).orElseThrow(() ->
-                new AppException(ErrorCode.TYPE_LEAVE_NOT_FOUND));
-
-        RequestLeave requestLeave = RequestLeave.builder()
-                .title(createLeaveRequest.getTitle())
-                .reason(createLeaveRequest.getReason())
-                .fromDate(createLeaveRequest.getFromDate())
-                .toDate(createLeaveRequest.getToDate())
-                .requestStatus(requestStatus)
-                .typeLeave(typeLeave)
-                .userCreated(user)
-                .build();
-        requestLeaveRepository.save(requestLeave);
     }
 }

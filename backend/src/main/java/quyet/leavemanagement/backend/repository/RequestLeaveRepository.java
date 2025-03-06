@@ -12,12 +12,12 @@ import java.util.List;
 
 @Repository
 public interface RequestLeaveRepository extends JpaRepository<RequestLeave, Integer> {
-    boolean existsByUserCreatedAndFromDateLessThanEqualAndToDateGreaterThanEqual(User userCreated, LocalDate fromDateIsLessThan, LocalDate toDateIsGreaterThan);
+//    boolean existsByUserCreatedAndFromDateLessThanEqualAndToDateGreaterThanEqual(User userCreated, LocalDate fromDateIsLessThan, LocalDate toDateIsGreaterThan);
 
-    List<RequestLeave> findAllByUserCreated(User userCreated);
+//    List<RequestLeave> findAllByUserCreated(User userCreated);
 
-    @Query("SELECT r FROM RequestLeave r WHERE r.userCreated.department.depId = :depId AND r.userCreated.userId <> :excludeUserId")
-    List<RequestLeave> findAllByUserCreated_Department_DepId_ExCludeUser(@Param("depId") int depId, @Param("excludeUserId") Long userId);
+//    @Query("SELECT r FROM RequestLeave r WHERE r.userCreated.department.depId = :depId AND r.userCreated.userId <> :excludeUserId")
+//    List<RequestLeave> findAllByUserCreated_Department_DepId_ExCludeUser(@Param("depId") int depId, @Param("excludeUserId") Long userId);
 
-    List<RequestLeave> findAllByUserCreated_Superior(User manager);
+//    List<RequestLeave> findAllByUserCreated_Superior(User manager);
 }

@@ -29,35 +29,36 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
     @Override
     @PreAuthorize("hasAuthority('VIEW_SUB_REQUEST')")
     public List<LeaveRequestResponse> getAllSubLeaveRequests() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Long userId = Long.valueOf(auth.getName());
-
-        User currentUser = userRepository.findByUserId(userId)
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        List<RequestLeave> requestLeaveList;
-
-        if (currentUser.hasRole("DIRECTOR")) {
-            requestLeaveList = requestLeaveRepository.findAll();
-        } else if (currentUser.hasRole("DIVISION_LEADER")) {
-            requestLeaveList = requestLeaveRepository.findAllByUserCreated_Department_DepId_ExCludeUser(currentUser.getDepartment().getDepId(), currentUser.getUserId());
-
-        } else if (currentUser.hasRole("LEADER")) {
-            requestLeaveList = requestLeaveRepository.findAllByUserCreated_Superior(currentUser);
-        } else {
-            throw new AppException(ErrorCode.UNAUTHORIZED);
-        }
-
-        return requestLeaveList.stream().map(request -> LeaveRequestResponse.builder()
-                .idRequest(request.getIdRequest())
-                .title(request.getTitle())
-                .reason(request.getReason())
-                .nameRequestStatus(request.getRequestStatus().getStatusName())
-                .fromDate(request.getFromDate())
-                .toDate(request.getToDate())
-                .nameTypeLeave(request.getTypeLeave().getNameTypeLeave())
-                .nameUserCreated(request.getUserCreated().getFullName())
-                .nameUserProcess(request.getUserProcess() != null ? request.getUserProcess().getFullName() : "")
-                .noteProcess(request.getNoteProcess())
-                .build()).toList();
+//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+//        Long userId = Long.valueOf(auth.getName());
+//
+//        User currentUser = userRepository.findByUserId(userId)
+//                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+//        List<RequestLeave> requestLeaveList;
+//
+//        if (currentUser.hasRole("DIRECTOR")) {
+//            requestLeaveList = requestLeaveRepository.findAll();
+//        } else if (currentUser.hasRole("DIVISION_LEADER")) {
+//            requestLeaveList = requestLeaveRepository.findAllByUserCreated_Department_DepId_ExCludeUser(currentUser.getDepartment().getDepId(), currentUser.getUserId());
+//
+//        } else if (currentUser.hasRole("LEADER")) {
+//            requestLeaveList = requestLeaveRepository.findAllByUserCreated_Superior(currentUser);
+//        } else {
+//            throw new AppException(ErrorCode.UNAUTHORIZED);
+//        }
+//
+//        return requestLeaveList.stream().map(request -> LeaveRequestResponse.builder()
+//                .idRequest(request.getIdRequest())
+//                .title(request.getTitle())
+//                .reason(request.getReason())
+//                .nameRequestStatus(request.getRequestStatus().getStatusName())
+//                .fromDate(request.getFromDate())
+//                .toDate(request.getToDate())
+//                .nameTypeLeave(request.getTypeLeave().getNameTypeLeave())
+//                .nameUserCreated(request.getUserCreated().getFullName())
+//                .nameUserProcess(request.getUserProcess() != null ? request.getUserProcess().getFullName() : "")
+//                .noteProcess(request.getNoteProcess())
+//                .build()).toList();
+        return null;
     }
 }

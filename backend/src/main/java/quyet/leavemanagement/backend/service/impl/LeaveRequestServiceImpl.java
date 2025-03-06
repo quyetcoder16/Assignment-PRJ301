@@ -35,8 +35,8 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                     .noteProcess(requestLeave.getNoteProcess())
                     .nameTypeLeave(requestLeave.getTypeLeave().getNameTypeLeave())
                     .nameRequestStatus(requestLeave.getRequestStatus().getStatusName())
-                    .nameUserCreated(requestLeave.getUserCreated().getFullName())
-                    .nameUserProcess(requestLeave.getUserProcess().getFullName())
+//                    .nameUserCreated(requestLeave.getUserCreated().getFullName())
+//                    .nameUserProcess(requestLeave.getUserProcess().getFullName())
                     .build();
         }).toList();
 
@@ -57,8 +57,8 @@ public class LeaveRequestServiceImpl implements LeaveRequestService {
                 .noteProcess(requestLeave.getNoteProcess())
                 .nameTypeLeave(requestLeave.getTypeLeave().getNameTypeLeave())
                 .nameRequestStatus(requestLeave.getRequestStatus().getStatusName())
-                .nameUserCreated(requestLeave.getUserCreated().getFullName())
-                .nameUserProcess(requestLeave.getUserProcess().getFullName())
+//                .nameUserCreated(requestLeave.getUserCreated().getFullName())
+//                .nameUserProcess(requestLeave.getUserProcess().getFullName())
                 .build();
     }
 }

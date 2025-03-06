@@ -25,28 +25,12 @@ public class User {
     @Column(name = "password", nullable = false)
     String password;
 
-    @Column(name = "full_name", columnDefinition = "NVARCHAR(255)")
-    String fullName;
-
     @OneToMany(mappedBy = "user")
     List<UserRole> listUserRole;
 
-    @OneToOne(mappedBy = "manager")
-    Department managerDepartment;
-
     @ManyToOne
-    @JoinColumn(name = "superior_id", referencedColumnName = "user_id")
-    User superior;
-
-    @ManyToOne
-    @JoinColumn(name = "dep_id", referencedColumnName = "dep_id")
-    Department department;
-
-    @OneToMany(mappedBy = "userCreated")
-    List<RequestLeave> listRequestLeaveCreated;
-
-    @OneToMany(mappedBy = "userProcess")
-    List<RequestLeave> listRequestLeaveProcessed;
+    @JoinColumn(name = "emp_id", referencedColumnName = "emp_id")
+    Employee employee;
 
     public boolean hasRole(String roleName) {
         return this.listUserRole.stream()

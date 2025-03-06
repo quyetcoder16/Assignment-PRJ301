@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class RequestLeave {
+public class RequestLeave extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -44,12 +44,12 @@ public class RequestLeave {
     RequestStatus requestStatus;
 
     @ManyToOne
-    @JoinColumn(name = "user_created_id", referencedColumnName = "user_id", nullable = false)
-    User userCreated;
+    @JoinColumn(name = "emp_created", referencedColumnName = "emp_id", nullable = false)
+    Employee employeeCreated;
 
     @ManyToOne
-    @JoinColumn(name = "user_process_id", referencedColumnName = "user_id")
-    User userProcess;
+    @JoinColumn(name = "emp_process", referencedColumnName = "emp_id")
+    Employee employeeProcess;
 
 
 }
