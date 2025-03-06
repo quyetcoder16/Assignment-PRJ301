@@ -11,32 +11,41 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  List,
+  ListItem,
+  ListItemText,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
+import { useSelector } from "react-redux";
 
 const Profile = () => {
-  const [open, setOpen] = useState(false);
-  const [user, setUser] = useState({
-    avatar: "https://i.pravatar.cc/150?img=3",
-    firstName: "Rafiquar",
-    lastName: "Rahman",
-    email: "rafiqurrahman51@gmail.com",
-    phone: "+09 345 346 46",
-    bio: "Team Manager",
-    country: "United Kingdom",
-    city: "Leeds, East London",
-  });
+  const { user } = useSelector((state) => state.authReducer);
 
-  const [editData, setEditData] = useState(user);
+  // Kiểm tra dữ liệu user, nếu không có giá trị thì gán default để tránh lỗi
+  const defaultUser = {
+    userId: "",
+    email: "",
+    fullName: "",
+    phoneNumber: "",
+    address: "",
+    direct_management: "",
+    permissions: [],
+  };
+
+  const userData = user || defaultUser;
+
+  const [open, setOpen] = useState(false);
+  const [editData, setEditData] = useState(userData);
 
   const handleOpen = () => {
-    setEditData(user);
+    setEditData(userData);
     setOpen(true);
   };
   const handleClose = () => setOpen(false);
 
   const handleSave = () => {
-    setUser(editData);
+    // TODO: Gửi dữ liệu cập nhật lên server
+    console.log("Saved Data:", editData);
     setOpen(false);
   };
 
@@ -48,13 +57,16 @@ const Profile = () => {
 
       {/* Profile Card */}
       <Card sx={{ display: "flex", alignItems: "center", p: 2, mb: 2 }}>
-        <Avatar src={user.avatar} sx={{ width: 80, height: 80, mr: 2 }} />
+        <Avatar
+          src={`https://i.pravatar.cc/150?img=${user?.userId}`}
+          sx={{ width: 80, height: 80, mr: 2 }}
+        />
         <div>
-          <Typography variant="h6">{`${user.firstName} ${user.lastName}`}</Typography>
-          <Typography color="textSecondary">{user.bio}</Typography>
+          <Typography variant="h6">{userData.fullName}</Typography>
           <Typography color="textSecondary">
-            {user.city}, {user.country}
+            {userData.direct_management}
           </Typography>
+          <Typography color="textSecondary">{userData.address}</Typography>
         </div>
         <Button
           startIcon={<EditIcon />}
@@ -70,44 +82,35 @@ const Profile = () => {
         <CardContent>
           <Typography variant="h6">Personal Information</Typography>
           <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={6}>
-              <Typography variant="body2">First Name</Typography>
-              <Typography>{user.firstName}</Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography variant="body2">Last Name</Typography>
-              <Typography>{user.lastName}</Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography variant="body2">Email Address</Typography>
-              <Typography>{user.email}</Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography variant="body2">Phone</Typography>
-              <Typography>{user.phone}</Typography>
+            <Grid item xs={12}>
+              <Typography variant="body2">Full Name</Typography>
+              <Typography>{userData.fullName}</Typography>
             </Grid>
             <Grid item xs={12}>
-              <Typography variant="body2">Bio</Typography>
-              <Typography>{user.bio}</Typography>
+              <Typography variant="body2">Email Address</Typography>
+              <Typography>{userData.email}</Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="body2">Phone</Typography>
+              <Typography>{userData.phoneNumber}</Typography>
             </Grid>
           </Grid>
         </CardContent>
       </Card>
 
       {/* Address */}
-      <Card>
+      <Card sx={{ mb: 2 }}>
         <CardContent>
           <Typography variant="h6">Address</Typography>
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={6}>
-              <Typography variant="body2">Country</Typography>
-              <Typography>{user.country}</Typography>
-            </Grid>
-            <Grid item xs={6}>
-              <Typography variant="body2">City/State</Typography>
-              <Typography>{user.city}</Typography>
-            </Grid>
-          </Grid>
+          <Typography>{userData.address}</Typography>
+        </CardContent>
+      </Card>
+
+      {/* Management */}
+      <Card sx={{ mb: 2 }}>
+        <CardContent>
+          <Typography variant="h6">Direct Management</Typography>
+          <Typography>{userData.direct_management}</Typography>
         </CardContent>
       </Card>
 
@@ -116,23 +119,14 @@ const Profile = () => {
         <DialogTitle>Edit Profile</DialogTitle>
         <DialogContent>
           <Grid container spacing={2}>
-            <Grid item xs={6}>
+            <Grid item xs={12}>
               <TextField
+                className="mt-3"
                 fullWidth
-                label="First Name"
-                value={editData.firstName}
+                label="Full Name"
+                value={editData.fullName}
                 onChange={(e) =>
-                  setEditData({ ...editData, firstName: e.target.value })
-                }
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Last Name"
-                value={editData.lastName}
-                onChange={(e) =>
-                  setEditData({ ...editData, lastName: e.target.value })
+                  setEditData({ ...editData, fullName: e.target.value })
                 }
               />
             </Grid>
@@ -150,39 +144,19 @@ const Profile = () => {
               <TextField
                 fullWidth
                 label="Phone"
-                value={editData.phone}
+                value={editData.phoneNumber}
                 onChange={(e) =>
-                  setEditData({ ...editData, phone: e.target.value })
+                  setEditData({ ...editData, phoneNumber: e.target.value })
                 }
               />
             </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
-                label="Bio"
-                value={editData.bio}
+                label="Address"
+                value={editData.address}
                 onChange={(e) =>
-                  setEditData({ ...editData, bio: e.target.value })
-                }
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="Country"
-                value={editData.country}
-                onChange={(e) =>
-                  setEditData({ ...editData, country: e.target.value })
-                }
-              />
-            </Grid>
-            <Grid item xs={6}>
-              <TextField
-                fullWidth
-                label="City/State"
-                value={editData.city}
-                onChange={(e) =>
-                  setEditData({ ...editData, city: e.target.value })
+                  setEditData({ ...editData, address: e.target.value })
                 }
               />
             </Grid>

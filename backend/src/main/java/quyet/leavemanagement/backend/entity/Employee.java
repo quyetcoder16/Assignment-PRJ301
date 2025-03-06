@@ -22,8 +22,11 @@ public class Employee {
     @Column(name = "full_name", nullable = false, columnDefinition = "NVARCHAR(255)")
     String fullName;
 
-    @Column(name = "phone",unique = true)
+    @Column(name = "phone", unique = true)
     String phone;
+
+    @Column(name = "address", nullable = true, columnDefinition = "NVARCHAR(255)")
+    String address;
 
     @OneToMany(mappedBy = "employee")
     List<User> listUser;
@@ -34,6 +37,9 @@ public class Employee {
     @ManyToOne
     @JoinColumn(name = "manager_id", referencedColumnName = "emp_id")
     Employee manager;
+
+    @OneToMany(mappedBy = "manager")
+    List<Employee> listEmployee;
 
     @ManyToOne
     @JoinColumn(name = "dep_id", referencedColumnName = "dep_id")

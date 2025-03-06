@@ -14,5 +14,8 @@ public class UserResponse {
     Long userId;
     String email;
     String fullName;
+    String phoneNumber;
+    String address;
+    String direct_management;
     List<String> permissions;
 }

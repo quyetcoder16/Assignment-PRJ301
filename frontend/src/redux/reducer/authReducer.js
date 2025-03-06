@@ -96,6 +96,8 @@ export const logoutUser = () => {
           message: "Logged out successfully",
         })
       );
+
+      window.location.href = "/login";
     } catch (error) {
       const data = error?.response?.data;
       dispatch(

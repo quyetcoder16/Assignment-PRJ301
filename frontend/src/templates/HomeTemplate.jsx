@@ -93,7 +93,6 @@ export default function HomeTemplate() {
     if (e.key === "logout") {
       try {
         dispatch(logoutUser());
-        navigate("/login");
       } catch (error) {}
     } else if (e.key === "profile") {
       navigate("/");
@@ -152,7 +151,11 @@ export default function HomeTemplate() {
             >
               <Button type="text">
                 <Space>
-                  <Avatar size="large" icon={<UserOutlined />} />
+                  <Avatar
+                    src={`https://i.pravatar.cc/150?img=${userInfo?.userId}`}
+                    size="large"
+                    icon={<UserOutlined />}
+                  />
                   Hi, {userInfo?.fullName} <DownOutlined />
                 </Space>
               </Button>

@@ -74,7 +74,10 @@ public class AuthServiceImpl implements AuthService {
                 .user(UserResponse.builder()
                         .userId(user.getUserId())
                         .email(user.getEmail())
-//                        .fullName(user.getFullName())
+                        .fullName(user.getEmployee().getFullName())
+                        .direct_management((user.getEmployee().getManager() != null) ? user.getEmployee().getManager().getFullName() : "")
+                        .phoneNumber(user.getEmployee().getPhone())
+                        .address(user.getEmployee().getAddress())
                         .permissions(permissions)
                         .build())
                 .build();
