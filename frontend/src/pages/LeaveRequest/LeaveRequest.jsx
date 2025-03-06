@@ -35,7 +35,7 @@ const LeaveRequest = () => {
   const [selectedRequest, setSelectedRequest] = useState(null); // ✅ Lưu đơn cần update
 
   useEffect(() => {
-    dispatch(getAllMyLeaveRequest());
+    // dispatch(getAllMyLeaveRequest());
     dispatch(getAllLeaveTypes());
   }, [dispatch]);
 

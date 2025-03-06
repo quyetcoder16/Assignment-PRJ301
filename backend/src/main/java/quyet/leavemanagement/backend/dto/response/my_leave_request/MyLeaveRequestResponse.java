@@ -5,6 +5,7 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -21,6 +22,7 @@ public class MyLeaveRequestResponse {
     String noteProcess;
     String nameTypeLeave;
     String nameRequestStatus;
-    String nameUserCreated;
-    String nameUserProcess;
+    String employeeCreated;
+    String employeeProcess;
+    LocalDateTime createdAt;
 }
