@@ -123,4 +123,6 @@ public interface RequestLeaveRepository extends JpaRepository<RequestLeave, Inte
     boolean existsByEmployeeCreatedAndFromDateLessThanEqualAndToDateGreaterThanEqual(Employee employeeCreated, LocalDate fromDateIsLessThan, LocalDate toDateIsGreaterThan);
 
     boolean existsByEmployeeCreatedAndFromDateLessThanEqualAndToDateGreaterThanEqualAndIdRequestNot(Employee employeeCreated, LocalDate fromDateIsLessThan, LocalDate toDateIsGreaterThan, int idRequest);
+
+    List<RequestLeave> findByEmployeeCreatedAndFromDateLessThanEqualAndToDateGreaterThanEqual(Employee employeeCreated, LocalDate fromDateIsLessThan, LocalDate toDateIsGreaterThan);
 }

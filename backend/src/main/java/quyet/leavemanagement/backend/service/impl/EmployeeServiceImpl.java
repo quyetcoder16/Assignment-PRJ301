@@ -35,4 +35,21 @@ public class EmployeeServiceImpl implements EmployeeService {
         }
     }
 
+    @Override
+    public List<Employee> getAllSubordinateEmployees(Long managerId) {
+        List<Employee> subordinates = new ArrayList<>();
+        collectSubordinateEmployees(managerId, subordinates);
+        return subordinates;
+    }
+
+    private void collectSubordinateEmployees(Long managerId, List<Employee> subordinates) {
+        List<Employee> directSubordinates = employeeRepository.findByManagerEmpId(managerId);
+        for (Employee subordinate : directSubordinates) {
+            if (!subordinates.contains(subordinate) && !subordinate.getEmpId().equals(managerId)) {
+                subordinates.add(subordinate);
+                collectSubordinateEmployees(subordinate.getEmpId(), subordinates); // Đệ quy
+            }
+        }
+    }
+
 }

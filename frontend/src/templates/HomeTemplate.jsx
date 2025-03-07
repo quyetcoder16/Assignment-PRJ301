@@ -63,16 +63,16 @@ const items = [
       { key: "agenda", label: "Agenda" },
     ],
   },
-  {
-    key: "employee-management",
-    icon: <UserOutlined />,
-    label: "Employee Management",
-    // children: [
-    //   { key: "my-leave-request", label: "My Leave Request" },
-    //   { key: "leave-approval", label: "Leave Approval" },
-    //   { key: "agenda", label: "Agenda" },
-    // ],
-  },
+  // {
+  //   key: "employee-management",
+  //   icon: <UserOutlined />,
+  //   label: "Employee Management",
+  //   // children: [
+  //   //   { key: "my-leave-request", label: "My Leave Request" },
+  //   //   { key: "leave-approval", label: "Leave Approval" },
+  //   //   { key: "agenda", label: "Agenda" },
+  //   // ],
+  // },
 ];
 
 export default function HomeTemplate() {
