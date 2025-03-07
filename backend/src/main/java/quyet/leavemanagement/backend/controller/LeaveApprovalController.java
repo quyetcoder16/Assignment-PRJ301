@@ -7,10 +7,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import quyet.leavemanagement.backend.dto.request.leave_approval.ProcessLeaveRequest;
 import quyet.leavemanagement.backend.dto.response.base.ApiResponse;
 import quyet.leavemanagement.backend.dto.response.leave_request.LeaveRequestResponse;
 import quyet.leavemanagement.backend.dto.response.my_leave_request.MyLeaveRequestResponse;
@@ -51,6 +49,19 @@ public class LeaveApprovalController {
         return ApiResponse.<Page<LeaveRequestResponse>>builder()
                 .data(leaveRequests)
                 .message("Filtered all leave requests successfully!")
+                .build();
+    }
+
+    @PostMapping("/process")
+    public ApiResponse<LeaveRequestResponse> processLeaveRequest(
+            @RequestBody ProcessLeaveRequest processLeaveRequest
+            ) {
+
+        LeaveRequestResponse response = leaveApprovalService.processLeaveRequest(processLeaveRequest.getIdRequest(), processLeaveRequest.getNoteProcess(),  processLeaveRequest.getAction());
+
+        return ApiResponse.<LeaveRequestResponse>builder()
+                .data(response)
+                .message("Leave request processed successfully!")
                 .build();
     }
 

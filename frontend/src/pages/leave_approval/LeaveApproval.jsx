@@ -10,6 +10,7 @@ import {
   message,
   Col,
   Row,
+  Tooltip, // Thêm Tooltip
 } from "antd";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,9 +18,7 @@ import dayjs from "dayjs";
 import {
   getAllLeaveApprovals,
   getAllLeaveTypes,
-  // approveLeaveRequest,
-  // rejectLeaveRequest,
-  // editLeaveRequestStatus,
+  processLeaveRequest,
 } from "../../redux/reducer/leaveRequestReducer";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -88,6 +87,7 @@ const LeaveApproval = () => {
           : null,
       leaveTypeId: filters.leaveTypeId || undefined,
       statusId: filters.statusId || undefined,
+      employeeName: filters.employeeName || undefined,
     });
   }, [dispatch, formSearch, filters]);
 
@@ -147,6 +147,7 @@ const LeaveApproval = () => {
       leaveTypeId: 0,
       statusId: 0,
       sort: "idRequest,desc",
+      employeeName: "",
     };
     setFilters(newFilters);
     updateUrl(newFilters);
@@ -163,18 +164,17 @@ const LeaveApproval = () => {
     const requestData = {
       idRequest: selectedRequest.idRequest,
       noteProcess: values.noteProcess,
+      action: actionType.toUpperCase(),
     };
 
-    if (actionType === "approve") {
-      // await dispatch(approveLeaveRequest(requestData));
-      message.success("Leave request approved!");
-    } else {
-      // await dispatch(rejectLeaveRequest(requestData));
-      message.success("Leave request rejected!");
-    }
-
+    await dispatch(
+      processLeaveRequest(
+        requestData.idRequest,
+        requestData.noteProcess,
+        requestData.action
+      )
+    );
     setIsConfirmModalOpen(false);
-    dispatch(getAllLeaveApprovals());
   };
 
   const openEditModal = (record) => {
@@ -189,15 +189,23 @@ const LeaveApproval = () => {
   const handleEditStatus = async (values) => {
     const requestData = {
       idRequest: selectedRequest.idRequest,
-      newStatus: values.status,
       noteProcess: values.noteProcess,
+      action:
+        values.status === "Approved"
+          ? "APPROVE"
+          : values.status === "Rejected"
+          ? "REJECT"
+          : "IN_PROGRESS",
     };
 
-    // await dispatch(editLeaveRequestStatus(requestData));
-    message.success("Leave request status updated!");
-
+    await dispatch(
+      processLeaveRequest(
+        requestData.idRequest,
+        requestData.noteProcess,
+        requestData.action
+      )
+    );
     setIsEditModalOpen(false);
-    dispatch(getAllLeaveApprovals());
   };
 
   const columns = [
@@ -225,19 +233,33 @@ const LeaveApproval = () => {
       title: "Status",
       dataIndex: "nameRequestStatus",
       key: "status",
-      render: (status) => (
-        <Tag
-          color={
-            status === "Approved"
-              ? "green"
-              : status === "In progress"
-              ? "blue"
-              : "red"
-          }
-        >
-          {status}
-        </Tag>
+      render: (status, record) => (
+        <Tooltip title={record.noteProcess || "No note available"}>
+          <Tag
+            color={
+              status === "Approved"
+                ? "green"
+                : status === "In progress"
+                ? "blue"
+                : "red"
+            }
+          >
+            {status}
+          </Tag>
+        </Tooltip>
       ),
+    },
+    {
+      title: "Processor",
+      dataIndex: "employeeProcess",
+      key: "processor",
+      render: (text) => (text ? text : "-"),
+    },
+    {
+      title: "createdAt",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (text) => (text ? dayjs(text).format("DD-MM-YYYY") : "-"),
     },
     {
       title: "Actions",
@@ -252,13 +274,15 @@ const LeaveApproval = () => {
               <>
                 <Button
                   type="primary"
+                  style={{ width: 65 }}
                   onClick={() => openConfirmModal(record, "approve")}
                 >
                   Approve
                 </Button>
                 <Button
                   danger
-                  className="ml-2"
+                  className="mt-2"
+                  style={{ width: 65 }}
                   onClick={() => openConfirmModal(record, "reject")}
                 >
                   Reject
@@ -400,7 +424,6 @@ const LeaveApproval = () => {
             <Select>
               <Option value="Approved">Approved</Option>
               <Option value="Rejected">Rejected</Option>
-              <Option value="In progress">In Progress</Option>
             </Select>
           </Form.Item>
           <Form.Item

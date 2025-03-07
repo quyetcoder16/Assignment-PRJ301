@@ -12,11 +12,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import quyet.leavemanagement.backend.dto.response.leave_request.LeaveRequestResponse;
 import quyet.leavemanagement.backend.dto.response.my_leave_request.MyLeaveRequestResponse;
+import quyet.leavemanagement.backend.entity.Employee;
 import quyet.leavemanagement.backend.entity.RequestLeave;
+import quyet.leavemanagement.backend.entity.RequestStatus;
 import quyet.leavemanagement.backend.entity.User;
 import quyet.leavemanagement.backend.exception.AppException;
 import quyet.leavemanagement.backend.exception.ErrorCode;
 import quyet.leavemanagement.backend.repository.RequestLeaveRepository;
+import quyet.leavemanagement.backend.repository.RequestStatusRepository;
 import quyet.leavemanagement.backend.repository.UserRepository;
 import quyet.leavemanagement.backend.service.EmployeeService;
 import quyet.leavemanagement.backend.service.LeaveApprovalService;
@@ -34,42 +37,7 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
     UserRepository userRepository;
     RequestLeaveRepository requestLeaveRepository;
     EmployeeService employeeService;
-
-    @Override
-    @PreAuthorize("hasAuthority('VIEW_SUB_REQUEST')")
-    public List<LeaveRequestResponse> getAllSubLeaveRequests() {
-//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-//        Long userId = Long.valueOf(auth.getName());
-//
-//        User currentUser = userRepository.findByUserId(userId)
-//                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-//        List<RequestLeave> requestLeaveList;
-//
-//        if (currentUser.hasRole("DIRECTOR")) {
-//            requestLeaveList = requestLeaveRepository.findAll();
-//        } else if (currentUser.hasRole("DIVISION_LEADER")) {
-//            requestLeaveList = requestLeaveRepository.findAllByUserCreated_Department_DepId_ExCludeUser(currentUser.getDepartment().getDepId(), currentUser.getUserId());
-//
-//        } else if (currentUser.hasRole("LEADER")) {
-//            requestLeaveList = requestLeaveRepository.findAllByUserCreated_Superior(currentUser);
-//        } else {
-//            throw new AppException(ErrorCode.UNAUTHORIZED);
-//        }
-//
-//        return requestLeaveList.stream().map(request -> LeaveRequestResponse.builder()
-//                .idRequest(request.getIdRequest())
-//                .title(request.getTitle())
-//                .reason(request.getReason())
-//                .nameRequestStatus(request.getRequestStatus().getStatusName())
-//                .fromDate(request.getFromDate())
-//                .toDate(request.getToDate())
-//                .nameTypeLeave(request.getTypeLeave().getNameTypeLeave())
-//                .nameUserCreated(request.getUserCreated().getFullName())
-//                .nameUserProcess(request.getUserProcess() != null ? request.getUserProcess().getFullName() : "")
-//                .noteProcess(request.getNoteProcess())
-//                .build()).toList();
-        return null;
-    }
+    RequestStatusRepository requestStatusRepository;
 
     @Override
     @PreAuthorize("hasAuthority('VIEW_SUB_REQUEST')")
@@ -127,6 +95,74 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
                         requestLeave.getEmployeeProcess().getFullName() : null)
                 .createdAt(requestLeave.getCreatedAt())
                 .build());
+    }
+
+    @Override
+    @PreAuthorize("hasAuthority('APPOVAL_REQUEST')")
+    public LeaveRequestResponse processLeaveRequest(Integer idRequest, String noteProcess, String action) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = Long.valueOf(auth.getName());
+        User currentUser = userRepository.findByUserId(userId).orElseThrow(() ->
+                new AppException(ErrorCode.USER_NOT_FOUND));
+
+        Employee currentEmployee = currentUser.getEmployee();
+        Long managerId = currentEmployee.getEmpId();
+
+        // Tìm đơn nghỉ theo idRequest
+        RequestLeave requestLeave = requestLeaveRepository.findById(idRequest)
+                .orElseThrow(() -> new AppException(ErrorCode.REQUEST_NOT_FOUND));
+
+        // Kiểm tra xem đơn có thuộc nhân viên dưới quyền không
+        List<Long> subordinateIds = employeeService.getSubordinateEmployeeIds(managerId);
+        if (!subordinateIds.contains(requestLeave.getEmployeeCreated().getEmpId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+
+        // Kiểm tra nếu startDate của đơn nghỉ nhỏ hơn ngày hiện tại, không cho phép phê duyệt hoặc sửa
+        if (requestLeave.getFromDate().isBefore(LocalDate.now())) {
+            throw new AppException(ErrorCode.DO_NOT_EDIT_LEAVE_IN_THE_PASS);
+        }
+
+
+
+        // Xử lý theo action
+        RequestStatus newStatus;
+        switch (action.toUpperCase()) {
+            case "APPROVE":
+                newStatus = requestStatusRepository.findById(2L) // Giả sử 2 = "Approved"
+                        .orElseThrow(() -> new AppException(ErrorCode.REQUEST_STATUS_NOT_FOUND));
+                break;
+            case "REJECT":
+                newStatus = requestStatusRepository.findById(3L) // Giả sử 3 = "Rejected"
+                        .orElseThrow(() -> new AppException(ErrorCode.REQUEST_STATUS_NOT_FOUND));
+                break;
+            default:
+                throw new AppException(ErrorCode.INVALID_ACTION); // Thêm mã lỗi mới nếu cần
+        }
+
+        // Cập nhật trạng thái, ghi chú và người xử lý
+        requestLeave.setRequestStatus(newStatus);
+        requestLeave.setNoteProcess(noteProcess);
+        requestLeave.setEmployeeProcess(currentEmployee);
+
+        // Lưu thay đổi
+        requestLeave = requestLeaveRepository.save(requestLeave);
+
+        // Trả về DTO
+        return LeaveRequestResponse.builder()
+                .idRequest(requestLeave.getIdRequest())
+                .title(requestLeave.getTitle())
+                .reason(requestLeave.getReason())
+                .fromDate(requestLeave.getFromDate())
+                .toDate(requestLeave.getToDate())
+                .noteProcess(requestLeave.getNoteProcess())
+                .nameTypeLeave(requestLeave.getTypeLeave().getNameTypeLeave())
+                .nameRequestStatus(requestLeave.getRequestStatus().getStatusName())
+                .employeeCreated(requestLeave.getEmployeeCreated().getFullName())
+                .employeeProcess(requestLeave.getEmployeeProcess() != null ?
+                        requestLeave.getEmployeeProcess().getFullName() : null)
+                .createdAt(requestLeave.getCreatedAt())
+                .build();
     }
 }
 

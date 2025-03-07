@@ -26,6 +26,9 @@ public enum ErrorCode {
     START_DATE_INVALID(3003, "Start date must be from today onwards", HttpStatus.BAD_REQUEST),
     END_DATE_INVALID(3004, "End date must be greater than or equal to start date", HttpStatus.BAD_REQUEST),
     LEAVE_DATE_ALREADY_EXISTS(3005, "Leave date already exists!", HttpStatus.BAD_REQUEST),
+    REQUEST_NOT_FOUND(3006, "Request not found!", HttpStatus.NOT_FOUND),
+    INVALID_ACTION(3007, "Invalid action!", HttpStatus.BAD_REQUEST),
+    DO_NOT_EDIT_LEAVE_IN_THE_PASS(3008, "Cannot edit past leave request!", HttpStatus.BAD_REQUEST),
     ;
     private int errorCode;
     private String message;

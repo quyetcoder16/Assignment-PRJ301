@@ -205,4 +205,40 @@ export const getAllLeaveApprovals =
     }
   };
 
+export const processLeaveRequest = (idRequest, noteProcess, action) => {
+  return async (dispatch) => {
+    dispatch(setLoading());
+    try {
+      const response = await leaveApprovalService.processLeaveRequestAPI(
+        idRequest,
+        noteProcess,
+        action
+      );
+      if (response.data.statusCode === 1000) {
+        dispatch(
+          showNotification({
+            type: NOTIFICATION_TYPE.success,
+            message: `Leave request ${action.toLowerCase()}ed successfully!`,
+          })
+        );
+        // Cập nhật lại danh sách sau khi xử lý
+        window.location.reload();
+        // dispatch(getAllLeaveApprovals(getFiltersFromState()));
+      } else {
+        throw new Error("Process leave request failed!");
+      }
+    } catch (error) {
+      dispatch(
+        showNotification({
+          type: NOTIFICATION_TYPE.error,
+          message:
+            error?.response?.data?.message || "Process leave request failed!",
+        })
+      );
+    } finally {
+      dispatch(hideLoading());
+    }
+  };
+};
+
 export default leaveRequestReducer.reducer;

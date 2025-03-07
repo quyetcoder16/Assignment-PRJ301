@@ -10,10 +10,11 @@ import java.util.List;
 
 @Service
 public interface LeaveApprovalService {
-    List<LeaveRequestResponse> getAllSubLeaveRequests();
 
     Page<LeaveRequestResponse> filterAllLeaveRequests(
             String startCreatedAt, String endCreatedAt, String leaveDateStart, String leaveDateEnd,
             int leaveTypeId, int statusId, String employeeName, Pageable pageable
     );
+
+    LeaveRequestResponse processLeaveRequest(Integer idRequest, String noteProcess, String action);
 }

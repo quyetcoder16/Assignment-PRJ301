@@ -30,6 +30,18 @@ const getAllSubLeaveRequest = async (
   });
 };
 
+const processLeaveRequestAPI = async (idRequest, noteProcess, action) => {
+  return await authorizedAxiosInstance.post(
+    `${DOMAIN}/leave_approval/process`,
+    {
+      idRequest,
+      noteProcess,
+      action,
+    }
+  );
+};
+
 export const leaveApprovalService = {
   getAllSubLeaveRequest,
+  processLeaveRequestAPI,
 };

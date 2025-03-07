@@ -9,6 +9,7 @@ import {
   Select,
   Row,
   Col,
+  Tooltip,
 } from "antd";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
@@ -162,24 +163,26 @@ const LeaveRequest = () => {
       title: "Status",
       dataIndex: "nameRequestStatus",
       key: "status",
-      render: (status) => (
-        <Tag
-          color={
-            status === "Approved"
-              ? "green"
-              : status === "In progress"
-              ? "blue"
-              : "red"
-          }
-        >
-          {status}
-        </Tag>
+      render: (status, record) => (
+        <Tooltip title={record.noteProcess || "No note available"}>
+          <Tag
+            color={
+              status === "Approved"
+                ? "green"
+                : status === "In progress"
+                ? "blue"
+                : "red"
+            }
+          >
+            {status}
+          </Tag>
+        </Tooltip>
       ),
     },
     { title: "Type", dataIndex: "nameTypeLeave", key: "type" },
     {
       title: "Processor",
-      dataIndex: "nameUserProcess",
+      dataIndex: "employeeProcess",
       key: "processor",
       render: (text) => (text ? text : "-"),
     },
@@ -193,6 +196,12 @@ const LeaveRequest = () => {
             <i className="fa-solid fa-pen-to-square"></i>
           </Button>
         ),
+    },
+    {
+      title: "createdAt",
+      dataIndex: "createdAt",
+      key: "createdAt",
+      render: (text) => (text ? dayjs(text).format("YYYY-MM-DD") : "-"),
     },
   ];
 
