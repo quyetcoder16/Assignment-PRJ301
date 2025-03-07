@@ -4,7 +4,9 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 import quyet.leavemanagement.backend.dto.request.my_leave_request.CreateLeaveRequest;
 import quyet.leavemanagement.backend.dto.response.base.ApiResponse;
@@ -23,13 +25,19 @@ public class MyLeaveRequestController {
 
     @GetMapping
     public ApiResponse<Page<MyLeaveRequestResponse>> filterLeaveRequests(
-            @RequestParam(required = false) String startCreatedAt,
-            @RequestParam(required = false) String endCreatedAt,
-            @RequestParam(required = false) String leaveDateStart,
-            @RequestParam(required = false) String leaveDateEnd,
+            @RequestParam(required = false, defaultValue = "") String startCreatedAt,
+            @RequestParam(required = false, defaultValue = "") String endCreatedAt,
+            @RequestParam(required = false, defaultValue = "") String leaveDateStart,
+            @RequestParam(required = false, defaultValue = "") String leaveDateEnd,
             @RequestParam(required = false, defaultValue = "0") int leaveTypeId,
             @RequestParam(required = false, defaultValue = "0") int statusId,
-            Pageable pageable) {
+            @RequestParam(defaultValue = "0") int pages,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "idRequest,desc") String sort) {
+
+        String[] sortParams = sort.split(",");
+        Sort sortOrder = Sort.by(Sort.Direction.fromString(sortParams[1]), sortParams[0]);
+        Pageable pageable = PageRequest.of(pages, size, sortOrder);
 
         Page<MyLeaveRequestResponse> leaveRequests = myLeaveRequestService.filterLeaveRequests(
                 startCreatedAt, endCreatedAt, leaveDateStart, leaveDateEnd, leaveTypeId, statusId, pageable

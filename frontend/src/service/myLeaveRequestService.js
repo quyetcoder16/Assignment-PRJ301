@@ -1,8 +1,29 @@
 import { DOMAIN } from "../utils/setting/config";
 import authorizedAxiosInstance from "./authorizedAxios";
 
-const getAllMyLeaveRequestAPI = async () => {
-  return authorizedAxiosInstance.get(`${DOMAIN}/my_leave_request`);
+const getAllMyLeaveRequestAPI = async (
+  page = 0,
+  size = 10,
+  startCreatedAt = "",
+  endCreatedAt = "",
+  leaveDateStart = "",
+  leaveDateEnd = "",
+  leaveTypeId = 0,
+  statusId = 0,
+  sort = "idRequest,desc"
+) => {
+  const params = {
+    size,
+    page,
+    startCreatedAt,
+    endCreatedAt,
+    leaveDateStart,
+    leaveDateEnd,
+    leaveTypeId,
+    statusId,
+    sort,
+  };
+  return authorizedAxiosInstance.get(`${DOMAIN}/my_leave_request`, { params });
 };
 
 const createMyLeaveRequestAPI = async (

@@ -9,6 +9,7 @@ const initialState = {
   leaveRequests: [],
   leaveTypes: [],
   leaveApprovals: [],
+  totalLeaveRequest: 0,
 };
 
 const leaveRequestReducer = createSlice({
@@ -16,7 +17,8 @@ const leaveRequestReducer = createSlice({
   initialState,
   reducers: {
     setLeaveRequests: (state, action) => {
-      state.leaveRequests = action.payload;
+      state.leaveRequests = action.payload.content; // Dữ liệu đơn nghỉ
+      state.totalLeaveRequest = action.payload.totalElements; // Tổng số đơn nghỉ
     },
     setLeaveTypes: (state, action) => {
       state.leaveTypes = action.payload;
@@ -31,13 +33,38 @@ export const { setLeaveRequests, setLeaveTypes, setLeaveApprovals } =
   leaveRequestReducer.actions;
 
 // redux thunk
-export const getAllMyLeaveRequest = () => {
+export const getAllMyLeaveRequest = ({
+  page = 0,
+  size = 10,
+  startCreatedAt = "",
+  endCreatedAt = "",
+  leaveDateStart = "",
+  leaveDateEnd = "",
+  leaveTypeId = 0,
+  statusId = 0,
+  sort = "idRequest,desc",
+}) => {
   return async (dispatch, getState) => {
     dispatch(setLoading());
     try {
-      const response = await myLeaveRequestService.getAllMyLeaveRequestAPI();
+      const response = await myLeaveRequestService.getAllMyLeaveRequestAPI(
+        page,
+        size,
+        startCreatedAt,
+        endCreatedAt,
+        leaveDateStart,
+        leaveDateEnd,
+        leaveTypeId,
+        statusId,
+        sort
+      );
       if (response.data.statusCode === 1000) {
-        dispatch(setLeaveRequests(response?.data?.data));
+        dispatch(
+          setLeaveRequests({
+            content: response?.data?.data?.content,
+            totalElements: response?.data?.data?.totalElements,
+          })
+        );
         // dispatch(
         //   showNotification({
         //     type: NOTIFICATION_TYPE.success,
@@ -93,6 +120,7 @@ export const createLeaveRequest = (requestData) => {
         toDate,
         idTypeRequest
       );
+
       if (response.data.statusCode === 1000) {
         dispatch(
           showNotification({
@@ -100,7 +128,15 @@ export const createLeaveRequest = (requestData) => {
             message: "Create Leave request successfully!",
           })
         );
-        dispatch(getAllMyLeaveRequest());
+        // dispatch(
+        //   getAllMyLeaveRequest({
+        //     page: 0,
+        //     size: 10,
+
+        //     sort: "idRequest,desc",
+        //   })
+        // );
+        window.location.href = "/my-leave-request";
       } else {
         throw new Error("Create leave request failed!");
       }

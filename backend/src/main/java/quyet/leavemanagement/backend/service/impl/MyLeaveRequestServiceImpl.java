@@ -71,11 +71,11 @@ public class MyLeaveRequestServiceImpl implements MyLeaveRequestService {
             leaveEnd = LocalDate.parse(leaveDateEnd, DateTimeFormatter.ISO_DATE);
         }
 
-        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "idRequest"));
+//        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "idRequest"));
 
 
         Page<RequestLeave> leaveRequests = requestLeaveRepository.findLeaveRequestsByFilters(
-                startCreated, endCreated, leaveStart, leaveEnd, leaveTypeId, statusId, user.getEmployee().getEmpId().longValue(), sortedPageable
+                startCreated, endCreated, leaveStart, leaveEnd, leaveTypeId, statusId, user.getEmployee().getEmpId().longValue(), pageable
         );
 
         return leaveRequests.map(requestLeave -> MyLeaveRequestResponse.builder()
