@@ -18,7 +18,5 @@ public interface MyLeaveRequestService {
             int leaveTypeId, int statusId, Pageable pageable);
 
 
-    public List<MyLeaveRequestResponse> getAllMyLeaveRequests();
-
     public void createMyLeaveRequest(CreateLeaveRequest createLeaveRequest);
 }

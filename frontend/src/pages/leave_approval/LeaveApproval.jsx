@@ -8,40 +8,149 @@ import {
   DatePicker,
   Select,
   message,
+  Col,
+  Row,
 } from "antd";
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import dayjs from "dayjs";
 import {
   getAllLeaveApprovals,
+  getAllLeaveTypes,
   // approveLeaveRequest,
   // rejectLeaveRequest,
   // editLeaveRequestStatus,
 } from "../../redux/reducer/leaveRequestReducer";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const { Option } = Select;
 const { RangePicker } = DatePicker;
 
 const LeaveApproval = () => {
   const dispatch = useDispatch();
-  const { leaveApprovals } = useSelector((state) => state.leaveRequestReducer);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { leaveApprovals, leaveTypes, totalLeaveApproval } = useSelector(
+    (state) => state.leaveRequestReducer
+  );
 
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [actionType, setActionType] = useState("");
-  const [filter, setFilter] = useState({
-    creator: "",
-    dateRange: [],
-    status: "",
-  });
+
+  // Hàm để parse query parameters từ URL
+  const getFiltersFromUrl = () => {
+    const searchParams = new URLSearchParams(location.search);
+    return {
+      page: parseInt(searchParams.get("page")) || 0,
+      size: parseInt(searchParams.get("size")) || 10,
+      startCreatedAt: searchParams.get("startCreatedAt") || "",
+      endCreatedAt: searchParams.get("endCreatedAt") || "",
+      leaveDateStart: searchParams.get("leaveDateStart") || "",
+      leaveDateEnd: searchParams.get("leaveDateEnd") || "",
+      leaveTypeId: parseInt(searchParams.get("leaveTypeId")) || 0,
+      statusId: parseInt(searchParams.get("statusId")) || 0,
+      sort: searchParams.get("sort") || "idRequest,desc",
+      employeeName: searchParams.get("employeeName") || "",
+    };
+  };
+  const [filters, setFilters] = useState(getFiltersFromUrl());
 
   const [formConfirm] = Form.useForm();
   const [formEdit] = Form.useForm();
+  const [formSearch] = Form.useForm();
+
+  // Cập nhật URL khi filters thay đổi
+  const updateUrl = (newFilters) => {
+    const searchParams = new URLSearchParams();
+    Object.entries(newFilters).forEach(([key, value]) => {
+      if (value !== "" && value !== 0) {
+        searchParams.set(key, value);
+      }
+    });
+    navigate(`${location.pathname}?${searchParams.toString()}`, {
+      replace: true,
+    });
+  };
 
   useEffect(() => {
-    dispatch(getAllLeaveApprovals());
-  }, [dispatch]);
+    dispatch(getAllLeaveTypes());
+    dispatch(getAllLeaveApprovals(filters));
+    formSearch.setFieldsValue({
+      createdDateRange:
+        filters.startCreatedAt && filters.endCreatedAt
+          ? [dayjs(filters.startCreatedAt), dayjs(filters.endCreatedAt)]
+          : null,
+      leaveDateRange:
+        filters.leaveDateStart && filters.leaveDateEnd
+          ? [dayjs(filters.leaveDateStart), dayjs(filters.leaveDateEnd)]
+          : null,
+      leaveTypeId: filters.leaveTypeId || undefined,
+      statusId: filters.statusId || undefined,
+    });
+  }, [dispatch, formSearch, filters]);
+
+  const handleTableChange = (pagination, _, sorter) => {
+    const newFilters = {
+      ...filters,
+      page: pagination.current - 1,
+      size: pagination.pageSize,
+      sort: sorter.order === "ascend" ? "idRequest,asc" : "idRequest,desc",
+    };
+    setFilters(newFilters);
+    updateUrl(newFilters);
+  };
+
+  // Xử lý tìm kiếm
+  const handleSearch = (values) => {
+    const {
+      createdDateRange,
+      leaveDateRange,
+      leaveTypeId,
+      statusId,
+      employeeName,
+    } = values;
+    const newFilters = {
+      ...filters,
+      page: 0,
+      startCreatedAt: createdDateRange
+        ? createdDateRange[0].format("YYYY-MM-DD") + "T00:00:00"
+        : "",
+      endCreatedAt: createdDateRange
+        ? createdDateRange[1].format("YYYY-MM-DD") + "T23:59:59"
+        : "",
+      leaveDateStart: leaveDateRange
+        ? leaveDateRange[0].format("YYYY-MM-DD")
+        : "",
+      leaveDateEnd: leaveDateRange
+        ? leaveDateRange[1].format("YYYY-MM-DD")
+        : "",
+      leaveTypeId: leaveTypeId || 0,
+      statusId: statusId || 0,
+      employeeName: employeeName || "",
+    };
+    setFilters(newFilters);
+    updateUrl(newFilters);
+  };
+
+  // Reset bộ lọc
+  const handleResetFilters = () => {
+    formSearch.resetFields();
+    const newFilters = {
+      page: 0,
+      size: 10,
+      startCreatedAt: "",
+      endCreatedAt: "",
+      leaveDateStart: "",
+      leaveDateEnd: "",
+      leaveTypeId: 0,
+      statusId: 0,
+      sort: "idRequest,desc",
+    };
+    setFilters(newFilters);
+    updateUrl(newFilters);
+  };
 
   const openConfirmModal = (record, type) => {
     setSelectedRequest(record);
@@ -91,21 +200,11 @@ const LeaveApproval = () => {
     dispatch(getAllLeaveApprovals());
   };
 
-  const filteredData = leaveApprovals.filter((item) => {
-    return (
-      (!filter.creator || item.nameUserCreated.includes(filter.creator)) &&
-      (!filter.status || item.nameRequestStatus === filter.status) &&
-      (!filter.dateRange.length ||
-        (dayjs(item.fromDate).isAfter(dayjs(filter.dateRange[0]), "day") &&
-          dayjs(item.toDate).isBefore(dayjs(filter.dateRange[1]), "day")))
-    );
-  });
-
   const columns = [
     {
       title: "Created By",
-      dataIndex: "nameUserCreated",
-      key: "nameUserCreated",
+      dataIndex: "employeeCreated",
+      key: "employeeCreated",
     },
     { title: "Title", dataIndex: "title", key: "title" },
     { title: "Reason", dataIndex: "reason", key: "reason" },
@@ -183,34 +282,76 @@ const LeaveApproval = () => {
     <div className="container mt-4">
       <h1>Leave Approvals</h1>
 
-      <div
-        className="mb-3"
-        style={{ display: "flex", gap: "10px", alignItems: "center" }}
-      >
-        <Input
-          placeholder="Search by Creator"
-          value={filter.creator}
-          onChange={(e) => setFilter({ ...filter, creator: e.target.value })}
-          style={{ width: "200px" }}
-        />
-        <RangePicker
-          format="DD-MM-YYYY"
-          onChange={(dates) => setFilter({ ...filter, dateRange: dates })}
-        />
-        <Select
-          placeholder="Select Status"
-          value={filter.status}
-          onChange={(value) => setFilter({ ...filter, status: value })}
-          allowClear
-          style={{ width: "150px" }}
-        >
-          <Option value="In progress">In Progress</Option>
-          <Option value="Approved">Approved</Option>
-          <Option value="Rejected">Rejected</Option>
-        </Select>
-      </div>
+      <Form form={formSearch} layout="vertical" onFinish={handleSearch}>
+        <Row gutter={16}>
+          <Col span={3}>
+            <Form.Item name="employeeName" label="Employee Name">
+              <Input placeholder="Enter employee name" />
+            </Form.Item>
+          </Col>
+          <Col span={5}>
+            <Form.Item name="createdDateRange" label="Created Date Range">
+              <RangePicker format="DD-MM-YYYY" style={{ width: "100%" }} />
+            </Form.Item>
+          </Col>
+          <Col span={5}>
+            <Form.Item name="leaveDateRange" label="Leave Date Range">
+              <RangePicker format="DD-MM-YYYY" style={{ width: "100%" }} />
+            </Form.Item>
+          </Col>
+          <Col span={3}>
+            <Form.Item name="leaveTypeId" label="Leave Type">
+              <Select placeholder="Select leave type" allowClear>
+                <Option value={0}>All</Option>
+                {leaveTypes.map((type) => (
+                  <Option key={type.id} value={type.id}>
+                    {type.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={3}>
+            <Form.Item name="statusId" label="Status">
+              <Select placeholder="Select status" allowClear>
+                <Option value={0}>All</Option>
+                <Option value={1}>In progress</Option>
+                <Option value={2}>Approved</Option>
+                <Option value={3}>Rejected</Option>
+              </Select>
+            </Form.Item>
+          </Col>
+          <Col span={4}>
+            <Form.Item label=" ">
+              <Button
+                type="primary"
+                htmlType="submit"
+                style={{ width: "100%" }}
+              >
+                Search
+              </Button>
+              <Button
+                onClick={handleResetFilters}
+                style={{ width: "100%", marginTop: 8 }}
+              >
+                Reset
+              </Button>
+            </Form.Item>
+          </Col>
+        </Row>
+      </Form>
 
-      <Table columns={columns} dataSource={filteredData} rowKey="idRequest" />
+      <Table
+        columns={columns}
+        dataSource={leaveApprovals}
+        rowKey="idRequest"
+        pagination={{
+          pageSize: filters.size,
+          total: totalLeaveApproval,
+          current: filters.page + 1,
+        }}
+        onChange={handleTableChange}
+      />
 
       {/* Modal Confirm Approve/Reject */}
       <Modal

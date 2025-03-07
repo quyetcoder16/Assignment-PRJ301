@@ -7,6 +7,7 @@ import quyet.leavemanagement.backend.entity.TypeLeave;
 import quyet.leavemanagement.backend.entity.User;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 @Data
 @AllArgsConstructor
@@ -22,6 +23,7 @@ public class LeaveRequestResponse {
     String noteProcess;
     String nameTypeLeave;
     String nameRequestStatus;
-    String nameUserCreated;
-    String nameUserProcess;
+    String employeeCreated;
+    String employeeProcess;
+    LocalDateTime createdAt;
 }

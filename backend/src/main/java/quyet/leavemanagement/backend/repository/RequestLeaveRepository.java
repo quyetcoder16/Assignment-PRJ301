@@ -44,5 +44,81 @@ public interface RequestLeaveRepository extends JpaRepository<RequestLeave, Inte
             Pageable pageable
     );
 
+//    @Query(value = "WITH employee_hierarchy AS (" +
+//            "    SELECT emp_id, manager_id, 0 AS level " +
+//            "    FROM employee " +
+//            "    WHERE emp_id = :managerId " +
+//            "    UNION ALL " +
+//            "    SELECT e.emp_id, e.manager_id, eh.level + 1 " +
+//            "    FROM employee e " +
+//            "    INNER JOIN employee_hierarchy eh ON e.manager_id = eh.emp_id " +
+//            ") " +
+//            "SELECT rl.* " +
+//            "FROM request_leave rl " +
+//            "INNER JOIN employee emp ON rl.emp_created = emp.emp_id " +
+//            "WHERE (:startCreatedAt IS NULL OR rl.created_at >= :startCreatedAt) " +
+//            "AND (:endCreatedAt IS NULL OR rl.created_at <= :endCreatedAt) " +
+//            "AND (:leaveDateStart IS NULL OR rl.from_date <= :leaveDateEnd) " +
+//            "AND (:leaveDateEnd IS NULL OR rl.to_date >= :leaveDateStart) " +
+//            "AND (:leaveTypeId = 0 OR rl.type_leave_id = :leaveTypeId) " +
+//            "AND (:statusId = 0 OR rl.status_id = :statusId) " +
+//            "AND (rl.emp_created IN (SELECT emp_id FROM employee_hierarchy eh WHERE eh.level != 0)) " +
+//            "AND (:employeeName IS NULL OR emp.full_name LIKE :employeeName) " +
+//            "ORDER BY rl.id_request DESC", // Sửa từ idRequest thành id_request
+//            countQuery = "WITH employee_hierarchy AS (" +
+//                    "    SELECT emp_id, manager_id, 0 AS level " +
+//                    "    FROM employee " +
+//                    "    WHERE emp_id = :managerId " +
+//                    "    UNION ALL " +
+//                    "    SELECT e.emp_id, e.manager_id, eh.level + 1 " +
+//                    "    FROM employee e " +
+//                    "    INNER JOIN employee_hierarchy eh ON e.manager_id = eh.emp_id " +
+//                    ") " +
+//                    "SELECT COUNT(*) " +
+//                    "FROM request_leave rl " +
+//                    "INNER JOIN employee emp ON rl.emp_created = emp.emp_id " +
+//                    "WHERE (:startCreatedAt IS NULL OR rl.created_at >= :startCreatedAt) " +
+//                    "AND (:endCreatedAt IS NULL OR rl.created_at <= :endCreatedAt) " +
+//                    "AND (:leaveDateStart IS NULL OR rl.from_date <= :leaveDateEnd) " +
+//                    "AND (:leaveDateEnd IS NULL OR rl.to_date >= :leaveDateStart) " +
+//                    "AND (:leaveTypeId = 0 OR rl.type_leave_id = :leaveTypeId) " +
+//                    "AND (:statusId = 0 OR rl.status_id = :statusId) " +
+//                    "AND (rl.emp_created IN (SELECT emp_id FROM employee_hierarchy eh WHERE eh.level != 0)) " +
+//                    "AND (:employeeName IS NULL OR emp.full_name LIKE :employeeName)",
+//            nativeQuery = true)
+//    Page<RequestLeave> findAllLeaveRequestsForManager(
+//            @Param("startCreatedAt") LocalDateTime startCreatedAt,
+//            @Param("endCreatedAt") LocalDateTime endCreatedAt,
+//            @Param("leaveDateStart") LocalDate leaveDateStart,
+//            @Param("leaveDateEnd") LocalDate leaveDateEnd,
+//            @Param("leaveTypeId") int leaveTypeId,
+//            @Param("statusId") int statusId,
+//            @Param("managerId") Long managerId,
+//            @Param("employeeName") String employeeName,
+//            Pageable pageable
+//    );
+
+    @Query("SELECT rl FROM RequestLeave rl " +
+            "JOIN rl.employeeCreated emp " +
+            "WHERE (:startCreatedAt IS NULL OR rl.createdAt >= :startCreatedAt) " +
+            "AND (:endCreatedAt IS NULL OR rl.createdAt <= :endCreatedAt) " +
+            "AND (:leaveDateStart IS NULL OR rl.fromDate <= :leaveDateEnd) " +
+            "AND (:leaveDateEnd IS NULL OR rl.toDate >= :leaveDateStart) " +
+            "AND (:leaveTypeId = 0 OR rl.typeLeave.typeLeaveId = :leaveTypeId) " +
+            "AND (:statusId = 0 OR rl.requestStatus.statusId = :statusId) " +
+            "AND emp.empId IN :subordinateIds " +
+            "AND (:employeeName IS NULL OR emp.fullName LIKE :employeeName)")
+    Page<RequestLeave> findAllLeaveRequestsForManager(
+            @Param("startCreatedAt") LocalDateTime startCreatedAt,
+            @Param("endCreatedAt") LocalDateTime endCreatedAt,
+            @Param("leaveDateStart") LocalDate leaveDateStart,
+            @Param("leaveDateEnd") LocalDate leaveDateEnd,
+            @Param("leaveTypeId") int leaveTypeId,
+            @Param("statusId") int statusId,
+            @Param("subordinateIds") List<Long> subordinateIds,
+            @Param("employeeName") String employeeName,
+            Pageable pageable
+    );
+
     boolean existsByEmployeeCreatedAndFromDateLessThanEqualAndToDateGreaterThanEqual(Employee employeeCreated, LocalDate fromDateIsLessThan, LocalDate toDateIsGreaterThan);
 }

@@ -93,31 +93,6 @@ public class MyLeaveRequestServiceImpl implements MyLeaveRequestService {
                 .build());
     }
 
-    @Override
-    @PreAuthorize("hasAuthority('VIEW_MY_REQUEST')")
-    public List<MyLeaveRequestResponse> getAllMyLeaveRequests() {
-//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-//        Long userId = Long.valueOf(auth.getName());
-//        User user = userRepository.findByUserId(userId).orElseThrow(() ->
-//                new AppException(ErrorCode.USER_NOT_FOUND));
-//        List<MyLeaveRequestResponse> leaveRequestResponses = requestLeaveRepository.findAllByUserCreated(user).stream()
-//                .map(requestLeave ->
-//                        MyLeaveRequestResponse.builder()
-//                                .idRequest(requestLeave.getIdRequest())
-//                                .title(requestLeave.getTitle())
-//                                .reason(requestLeave.getReason())
-//                                .nameRequestStatus(requestLeave.getRequestStatus().getStatusName())
-//                                .fromDate(requestLeave.getFromDate())
-//                                .toDate(requestLeave.getToDate())
-//                                .nameTypeLeave(requestLeave.getTypeLeave().getNameTypeLeave())
-////                                .nameUserCreated(requestLeave.getUserCreated().getFullName())
-////                                .nameUserProcess((requestLeave.getUserProcess() != null) ? (requestLeave.getUserProcess().getFullName()) : "")
-//                                .noteProcess(requestLeave.getNoteProcess())
-//                                .build())
-//                .toList();
-//        return leaveRequestResponses;
-        return null;
-    }
 
     @Override
     @Transactional
