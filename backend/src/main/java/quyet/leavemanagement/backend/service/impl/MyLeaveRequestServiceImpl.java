@@ -14,6 +14,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import quyet.leavemanagement.backend.dto.request.my_leave_request.CreateLeaveRequest;
+import quyet.leavemanagement.backend.dto.request.my_leave_request.UpdateLeaveRequest;
 import quyet.leavemanagement.backend.dto.response.leave_request.LeaveRequestResponse;
 import quyet.leavemanagement.backend.dto.response.my_leave_request.MyLeaveRequestResponse;
 import quyet.leavemanagement.backend.entity.RequestLeave;
@@ -140,5 +141,77 @@ public class MyLeaveRequestServiceImpl implements MyLeaveRequestService {
                 .build();
         requestLeaveRepository.save(requestLeave);
 
+    }
+
+    @Override
+    @Transactional
+    @PreAuthorize("hasAuthority('EDIT_MY_REQUEST')")
+    public void updateMyLeaveRequest(UpdateLeaveRequest updateLeaveRequest) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = Long.valueOf(auth.getName());
+        User user = userRepository.findByUserId(userId).orElseThrow(() ->
+                new AppException(ErrorCode.USER_NOT_FOUND));
+
+        RequestLeave requestLeave = requestLeaveRepository.findById(updateLeaveRequest.getIdRequest())
+                .orElseThrow(() -> new AppException(ErrorCode.REQUEST_NOT_FOUND));
+
+        // Kiểm tra quyền sở hữu và trạng thái
+        if (!requestLeave.getEmployeeCreated().getEmpId().equals(user.getEmployee().getEmpId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+        if (requestLeave.getRequestStatus().getStatusId() != 1) { // Chỉ cho sửa khi "In progress"
+            throw new AppException(ErrorCode.REQUEST_ALREADY_PROCESSED);
+        }
+
+        LocalDate today = LocalDate.now();
+        if (updateLeaveRequest.getFromDate().isBefore(today)) {
+            throw new AppException(ErrorCode.START_DATE_INVALID);
+        }
+        if (updateLeaveRequest.getToDate().isBefore(updateLeaveRequest.getFromDate())) {
+            throw new AppException(ErrorCode.END_DATE_INVALID);
+        }
+
+        // Kiểm tra trùng lặp ngày (trừ request hiện tại)
+        boolean isDateOverlapping = requestLeaveRepository.existsByEmployeeCreatedAndFromDateLessThanEqualAndToDateGreaterThanEqualAndIdRequestNot(
+                user.getEmployee(), updateLeaveRequest.getToDate(), updateLeaveRequest.getFromDate(), updateLeaveRequest.getIdRequest()
+        );
+        if (isDateOverlapping) {
+            throw new AppException(ErrorCode.LEAVE_DATE_ALREADY_EXISTS);
+        }
+
+        TypeLeave typeLeave = typeLeaveRepository.findById(updateLeaveRequest.getIdTypeRequest().longValue())
+                .orElseThrow(() -> new AppException(ErrorCode.TYPE_LEAVE_NOT_FOUND));
+
+        // Cập nhật thông tin
+        requestLeave.setTitle(updateLeaveRequest.getTitle());
+        requestLeave.setReason(updateLeaveRequest.getReason());
+        requestLeave.setFromDate(updateLeaveRequest.getFromDate());
+        requestLeave.setToDate(updateLeaveRequest.getToDate());
+        requestLeave.setTypeLeave(typeLeave);
+
+        requestLeaveRepository.save(requestLeave);
+    }
+
+    @Override
+    @Transactional
+    @PreAuthorize("hasAuthority('DELETE_MY_REQUEST')")
+    public void deleteMyLeaveRequest(Integer idRequest) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Long userId = Long.valueOf(auth.getName());
+        User user = userRepository.findByUserId(userId).orElseThrow(() ->
+                new AppException(ErrorCode.USER_NOT_FOUND));
+
+        RequestLeave requestLeave = requestLeaveRepository.findById(idRequest)
+                .orElseThrow(() -> new AppException(ErrorCode.REQUEST_NOT_FOUND));
+
+        // Kiểm tra quyền sở hữu và trạng thái
+        if (!requestLeave.getEmployeeCreated().getEmpId().equals(user.getEmployee().getEmpId())) {
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
+        if (requestLeave.getRequestStatus().getStatusId() != 1) { // Chỉ cho xóa khi "In progress"
+            throw new AppException(ErrorCode.REQUEST_ALREADY_PROCESSED);
+        }
+
+        requestLeaveRepository.delete(requestLeave);
     }
 }

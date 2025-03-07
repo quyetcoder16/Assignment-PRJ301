@@ -46,8 +46,23 @@ const getAllLeaveTypesAPI = async () => {
   return authorizedAxiosInstance.get(`${DOMAIN}/type_leave`);
 };
 
+const updateMyLeaveRequestAPI = async (requestData) => {
+  return await authorizedAxiosInstance.put(
+    `${DOMAIN}/my_leave_request/update`,
+    requestData
+  );
+};
+
+const deleteMyLeaveRequestAPI = async (idRequest) => {
+  return await authorizedAxiosInstance.delete(
+    `${DOMAIN}/my_leave_request/delete/${idRequest}`
+  );
+};
+
 export const myLeaveRequestService = {
   getAllMyLeaveRequestAPI,
   createMyLeaveRequestAPI,
   getAllLeaveTypesAPI,
+  updateMyLeaveRequestAPI,
+  deleteMyLeaveRequestAPI,
 };

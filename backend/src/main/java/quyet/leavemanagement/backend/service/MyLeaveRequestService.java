@@ -4,6 +4,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import quyet.leavemanagement.backend.dto.request.my_leave_request.CreateLeaveRequest;
+import quyet.leavemanagement.backend.dto.request.my_leave_request.UpdateLeaveRequest;
 import quyet.leavemanagement.backend.dto.response.leave_request.LeaveRequestResponse;
 import quyet.leavemanagement.backend.dto.response.my_leave_request.MyLeaveRequestResponse;
 
@@ -19,4 +20,8 @@ public interface MyLeaveRequestService {
 
 
     public void createMyLeaveRequest(CreateLeaveRequest createLeaveRequest);
+
+    void updateMyLeaveRequest(UpdateLeaveRequest updateLeaveRequest);
+
+    void deleteMyLeaveRequest(Integer idRequest);
 }

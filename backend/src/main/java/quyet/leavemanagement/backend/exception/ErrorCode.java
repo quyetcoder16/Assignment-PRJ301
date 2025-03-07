@@ -29,6 +29,7 @@ public enum ErrorCode {
     REQUEST_NOT_FOUND(3006, "Request not found!", HttpStatus.NOT_FOUND),
     INVALID_ACTION(3007, "Invalid action!", HttpStatus.BAD_REQUEST),
     DO_NOT_EDIT_LEAVE_IN_THE_PASS(3008, "Cannot edit past leave request!", HttpStatus.BAD_REQUEST),
+    REQUEST_ALREADY_PROCESSED(3009, "Request already processed!", HttpStatus.BAD_REQUEST),
     ;
     private int errorCode;
     private String message;

@@ -33,13 +33,13 @@ public class LeaveApprovalController {
             @RequestParam(required = false, defaultValue = "0") int leaveTypeId,
             @RequestParam(required = false, defaultValue = "0") int statusId,
             @RequestParam(required = false, defaultValue = "") String employeeName, // Thêm lọc theo tên
-            @RequestParam(defaultValue = "0") int pages,
+            @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "idRequest,desc") String sort) {
 
         String[] sortParams = sort.split(",");
         Sort sortOrder = Sort.by(Sort.Direction.fromString(sortParams[1]), sortParams[0]);
-        Pageable pageable = PageRequest.of(pages, size, sortOrder);
+        Pageable pageable = PageRequest.of(page, size, sortOrder);
 
         Page<LeaveRequestResponse> leaveRequests = leaveApprovalService.filterAllLeaveRequests(
                 startCreatedAt, endCreatedAt, leaveDateStart, leaveDateEnd,

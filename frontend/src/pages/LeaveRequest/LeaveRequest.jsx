@@ -18,6 +18,8 @@ import {
   getAllMyLeaveRequest,
   createLeaveRequest,
   getAllLeaveTypes,
+  updateLeaveRequest,
+  deleteLeaveRequest,
 } from "../../redux/reducer/leaveRequestReducer";
 import dayjs from "dayjs";
 
@@ -33,7 +35,6 @@ const LeaveRequest = () => {
   );
   const { user } = useSelector((state) => state.authReducer);
 
-  // Hàm để parse query parameters từ URL
   const getFiltersFromUrl = () => {
     const searchParams = new URLSearchParams(location.search);
     return {
@@ -52,13 +53,14 @@ const LeaveRequest = () => {
   const [filters, setFilters] = useState(getFiltersFromUrl());
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false); // Thêm state cho modal xóa
   const [formCreate] = Form.useForm();
   const [formUpdate] = Form.useForm();
   const [formSearch] = Form.useForm();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState(null);
+  const [requestToDelete, setRequestToDelete] = useState(null); // Lưu request cần xóa
 
-  // Cập nhật URL khi filters thay đổi
   const updateUrl = (newFilters) => {
     const searchParams = new URLSearchParams();
     Object.entries(newFilters).forEach(([key, value]) => {
@@ -74,7 +76,6 @@ const LeaveRequest = () => {
   useEffect(() => {
     dispatch(getAllLeaveTypes());
     dispatch(getAllMyLeaveRequest(filters));
-    // Đồng bộ form search với filters từ URL
     formSearch.setFieldsValue({
       createdDateRange:
         filters.startCreatedAt && filters.endCreatedAt
@@ -100,7 +101,6 @@ const LeaveRequest = () => {
     updateUrl(newFilters);
   };
 
-  // Xử lý tìm kiếm
   const handleSearch = (values) => {
     const { createdDateRange, leaveDateRange, leaveTypeId, statusId } = values;
     const newFilters = {
@@ -125,7 +125,6 @@ const LeaveRequest = () => {
     updateUrl(newFilters);
   };
 
-  // Reset bộ lọc
   const handleResetFilters = () => {
     formSearch.resetFields();
     const newFilters = {
@@ -143,7 +142,6 @@ const LeaveRequest = () => {
     updateUrl(newFilters);
   };
 
-  // Các cột của bảng (giữ nguyên)
   const columns = [
     { title: "Title", dataIndex: "title", key: "title" },
     { title: "Reason", dataIndex: "reason", key: "reason" },
@@ -192,20 +190,24 @@ const LeaveRequest = () => {
       render: (_, record) =>
         record.nameRequestStatus === "In progress" &&
         dayjs().isBefore(dayjs(record.fromDate), "day") && (
-          <Button type="link" onClick={() => openUpdateModal(record)}>
-            <i className="fa-solid fa-pen-to-square"></i>
-          </Button>
+          <>
+            <Button type="link" onClick={() => openUpdateModal(record)}>
+              <i className="fa-solid fa-pen-to-square"></i>
+            </Button>
+            <Button type="link" danger onClick={() => openDeleteModal(record)}>
+              <i className="fa-solid fa-trash"></i>
+            </Button>
+          </>
         ),
     },
     {
-      title: "createdAt",
+      title: "Created At",
       dataIndex: "createdAt",
       key: "createdAt",
       render: (text) => (text ? dayjs(text).format("YYYY-MM-DD") : "-"),
     },
   ];
 
-  // Tạo và cập nhật yêu cầu (giữ nguyên)
   const handleCreateRequest = async (values) => {
     setIsSubmitting(true);
     const requestData = {
@@ -251,7 +253,7 @@ const LeaveRequest = () => {
     };
 
     try {
-      // await dispatch(updateLeaveRequest(updatedData));
+      await dispatch(updateLeaveRequest(updatedData));
       setIsUpdateModalOpen(false);
       setSelectedRequest(null);
     } finally {
@@ -259,7 +261,22 @@ const LeaveRequest = () => {
     }
   };
 
-  // Phần render giữ nguyên
+  const openDeleteModal = (record) => {
+    setRequestToDelete(record);
+    setIsDeleteModalOpen(true);
+  };
+
+  const handleDeleteRequest = async () => {
+    setIsSubmitting(true);
+    try {
+      await dispatch(deleteLeaveRequest(requestToDelete.idRequest));
+      setIsDeleteModalOpen(false);
+      setRequestToDelete(null);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="container mt-4">
       <h1 className="text-center">My Leave Requests</h1>
@@ -340,6 +357,7 @@ const LeaveRequest = () => {
         onChange={handleTableChange}
       />
 
+      {/* Modal Create */}
       <Modal
         title="Create New Leave Request"
         open={isCreateModalOpen}
@@ -399,6 +417,7 @@ const LeaveRequest = () => {
         </Form>
       </Modal>
 
+      {/* Modal Update */}
       <Modal
         title="Update Leave Request"
         open={isUpdateModalOpen}
@@ -411,16 +430,32 @@ const LeaveRequest = () => {
           onFinish={handleUpdateRequest}
           disabled={isSubmitting}
         >
-          <Form.Item name="title" label="Title">
+          <Form.Item
+            name="title"
+            label="Title"
+            rules={[{ required: true, message: "Please enter title" }]}
+          >
             <Input />
           </Form.Item>
-          <Form.Item name="reason" label="Reason">
+          <Form.Item
+            name="reason"
+            label="Reason"
+            rules={[{ required: true, message: "Please enter reason" }]}
+          >
             <Input.TextArea rows={3} />
           </Form.Item>
-          <Form.Item name="dateRange" label="Select Date Range">
+          <Form.Item
+            name="dateRange"
+            label="Select Date Range"
+            rules={[{ required: true, message: "Please select date range" }]}
+          >
             <RangePicker format="DD-MM-YYYY" />
           </Form.Item>
-          <Form.Item name="idTypeRequest" label="Type of Leave">
+          <Form.Item
+            name="idTypeRequest"
+            label="Type of Leave"
+            rules={[{ required: true, message: "Please select leave type" }]}
+          >
             <Select>
               {leaveTypes.map((type) => (
                 <Option key={type.id} value={type.id}>
@@ -435,6 +470,38 @@ const LeaveRequest = () => {
             </Button>
           </Form.Item>
         </Form>
+      </Modal>
+
+      {/* Modal Confirm Delete */}
+      <Modal
+        title="Confirm Deletion"
+        open={isDeleteModalOpen}
+        onCancel={() => setIsDeleteModalOpen(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setIsDeleteModalOpen(false)}>
+            Cancel
+          </Button>,
+          <Button
+            key="delete"
+            type="primary"
+            danger
+            onClick={handleDeleteRequest}
+            loading={isSubmitting}
+          >
+            Delete
+          </Button>,
+        ]}
+      >
+        <p>Are you sure you want to delete this leave request?</p>
+        {requestToDelete && (
+          <p>
+            <strong>Title:</strong> {requestToDelete.title} <br />
+            <strong>From:</strong>{" "}
+            {dayjs(requestToDelete.fromDate).format("DD-MM-YYYY")} <br />
+            <strong>To:</strong>{" "}
+            {dayjs(requestToDelete.toDate).format("DD-MM-YYYY")}
+          </p>
+        )}
       </Modal>
     </div>
   );

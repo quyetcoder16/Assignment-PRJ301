@@ -241,4 +241,69 @@ export const processLeaveRequest = (idRequest, noteProcess, action) => {
   };
 };
 
+export const updateLeaveRequest = (requestData) => {
+  return async (dispatch) => {
+    dispatch(setLoading());
+    try {
+      const response = await myLeaveRequestService.updateMyLeaveRequestAPI(
+        requestData
+      );
+      if (response.data.statusCode === 1000) {
+        dispatch(
+          showNotification({
+            type: NOTIFICATION_TYPE.success,
+            message: "Update Leave request successfully!",
+          })
+        );
+        window.location.reload();
+      } else {
+        throw new Error("Update leave request failed!");
+      }
+    } catch (error) {
+      dispatch(
+        showNotification({
+          type: NOTIFICATION_TYPE.error,
+          message:
+            error?.response?.data?.message || "Update leave request failed!",
+        })
+      );
+    } finally {
+      dispatch(hideLoading());
+    }
+  };
+};
+
+// Thêm thunk cho delete
+export const deleteLeaveRequest = (idRequest) => {
+  return async (dispatch) => {
+    dispatch(setLoading());
+    try {
+      const response = await myLeaveRequestService.deleteMyLeaveRequestAPI(
+        idRequest
+      );
+      if (response.data.statusCode === 1000) {
+        dispatch(
+          showNotification({
+            type: NOTIFICATION_TYPE.success,
+            message: "Delete Leave request successfully!",
+          })
+        );
+        window.location.reload();
+      } else {
+        throw new Error("Delete leave request failed!");
+      }
+    } catch (error) {
+      dispatch(
+        showNotification({
+          type: NOTIFICATION_TYPE.error,
+          message:
+            error?.response?.data?.message || "Delete leave request failed!",
+        })
+      );
+    } finally {
+      dispatch(hideLoading());
+    }
+  };
+};
+
 export default leaveRequestReducer.reducer;
