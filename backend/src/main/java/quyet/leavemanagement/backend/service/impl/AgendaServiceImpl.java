@@ -94,7 +94,7 @@ public class AgendaServiceImpl implements AgendaService {
         final LocalDate adjustedEndDate = "month".equals(viewMode)
                 ? endDate.withDayOfMonth(endDate.lengthOfMonth())
                 : "year".equals(viewMode)
-                ? startDate.withDayOfYear(startDate.lengthOfYear())
+                ? endDate.withDayOfYear(endDate.lengthOfYear())
                 : endDate;
 
         List<Employee> subordinates = employeeService.getAllSubordinateEmployees(currentUser.getEmployee().getEmpId());

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Table, DatePicker, Select, Tag, Button } from "antd";
+import { Table, DatePicker, Select, Tag, Button, Alert } from "antd";
 import { useDispatch, useSelector } from "react-redux";
 import dayjs from "dayjs";
 import isoWeek from "dayjs/plugin/isoWeek";
@@ -15,15 +15,27 @@ const AgendaEmployeeStatus = () => {
   const dispatch = useDispatch();
   const { subordinateEmployees } = useSelector((state) => state.agendaReducer);
 
-  const [dateRange, setDateRange] = useState([dayjs(), dayjs().add(7, "day")]);
+  const [dateRange, setDateRange] = useState([
+    dayjs("2020-01-29"),
+    dayjs("2026-02-11"),
+  ]); // Đặt mặc định theo yêu cầu
   const [viewMode, setViewMode] = useState("day");
+  const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
+    // Kiểm tra khoảng thời gian nếu viewMode là "day"
+    const daysDiff = dateRange[1].diff(dateRange[0], "day");
+    if (viewMode === "day" && daysDiff > 31) {
+      setShowWarning(true);
+    } else {
+      setShowWarning(false);
+    }
+
     dispatch(
       getSubordinateEmployeeStatus({
         startDate: dateRange[0].format("YYYY-MM-DD"),
         endDate: dateRange[1].format("YYYY-MM-DD"),
-        viewMode: viewMode === "week" ? "day" : viewMode, // Week vẫn dùng "day" để lấy dữ liệu chi tiết
+        viewMode: viewMode === "week" ? "week" : viewMode, // Giữ nguyên logic week dùng "week"
       })
     );
   }, [dispatch, dateRange, viewMode]);
@@ -41,15 +53,21 @@ const AgendaEmployeeStatus = () => {
     let start = dateRange[0].startOf(viewMode);
     let end = dateRange[1].endOf(viewMode);
     let current = start;
+    let daysCounter = 0;
 
-    while (current.isBefore(end) || current.isSame(end)) {
+    while (
+      (current.isBefore(end) || current.isSame(end)) &&
+      (viewMode !== "day" || daysCounter < 31)
+    ) {
       const title =
         viewMode === "day"
           ? current.format("DD/MM")
           : viewMode === "week"
           ? `Week ${current.isoWeek()} (${current
               .startOf("week")
-              .format("DD/MM")} - ${current.endOf("week").format("DD/MM")})`
+              .format("DD/MM/YYYY")} - ${current
+              .endOf("week")
+              .format("DD/MM/YYYY")})` // Thêm năm vào tiêu đề
           : viewMode === "month"
           ? current.format("MM/YYYY")
           : current.format("YYYY");
@@ -62,6 +80,7 @@ const AgendaEmployeeStatus = () => {
       });
 
       current = current.add(1, viewMode);
+      if (viewMode === "day") daysCounter++;
     }
     return columns;
   };
@@ -76,21 +95,28 @@ const AgendaEmployeeStatus = () => {
       let start = dateRange[0].startOf(viewMode);
       let end = dateRange[1].endOf(viewMode);
       let current = start;
+      let daysCounter = 0;
 
-      while (current.isBefore(end) || current.isSame(end)) {
+      while (
+        (current.isBefore(end) || current.isSame(end)) &&
+        (viewMode !== "day" || daysCounter < 31)
+      ) {
         const key =
           viewMode === "day"
             ? current.format("DD/MM")
             : viewMode === "week"
             ? `Week ${current.isoWeek()} (${current
                 .startOf("week")
-                .format("DD/MM")} - ${current.endOf("week").format("DD/MM")})`
+                .format("DD/MM/YYYY")} - ${current
+                .endOf("week")
+                .format("DD/MM/YYYY")})` // Thêm năm vào key
             : viewMode === "month"
             ? current.format("MM/YYYY")
             : current.format("YYYY");
 
         if (viewMode === "day") {
-          row[key] = emp.leaveDays.includes(current.format("YYYY-MM-DD")) ? (
+          const currentDate = current.format("YYYY-MM-DD");
+          row[key] = emp.leaveDays.includes(currentDate) ? (
             <Tag color="red">Off</Tag>
           ) : (
             <Tag color="green">No Leave</Tag>
@@ -113,6 +139,7 @@ const AgendaEmployeeStatus = () => {
             );
         }
         current = current.add(1, viewMode);
+        if (viewMode === "day") daysCounter++;
       }
       return row;
     });
@@ -185,11 +212,21 @@ const AgendaEmployeeStatus = () => {
           Export to Excel
         </Button>
       </div>
+      {showWarning && (
+        <Alert
+          message="Warning"
+          description="The selected date range exceeds 31 days. Only the first 31 days will be displayed. Please switch to 'Month' or 'Year' view for a broader range."
+          type="warning"
+          showIcon
+          style={{ marginBottom: "10px" }}
+        />
+      )}
       <Table
         columns={generateColumns()}
         dataSource={generateData()}
         pagination={false}
         locale={{ emptyText: "No data available or you lack permission." }}
+        scroll={{ x: "max-content" }} // Thêm scroll ngang để xử lý nhiều cột
       />
     </div>
   );
