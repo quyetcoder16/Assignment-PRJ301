@@ -19,21 +19,22 @@ const agendaReducer = createSlice({
 });
 
 export const { setSubordinateEmployees } = agendaReducer.actions;
-
 export const getSubordinateEmployeeStatus =
-  ({ startDate, endDate }) =>
+  ({ startDate, endDate, viewMode }) =>
   async (dispatch) => {
     dispatch(setLoading());
     try {
       const response = await agendaService.getSubordinateEmployeeStatus(
         startDate,
-        endDate
+        endDate,
+        viewMode
       );
       if (response.data.statusCode === 1000) {
         const employeesData = response.data.data.map((emp) => ({
           key: emp.id,
           id: emp.id,
           name: emp.name,
+          departmentName: emp.departmentName,
           leaveDays: emp.leaveDays,
         }));
         dispatch(setSubordinateEmployees(employeesData));

@@ -13,5 +13,6 @@ import java.util.List;
 public class SimpleEmployeeStatusResponse {
     Long id;
     String name;
+    String departmentName;
     List<String> leaveDays;
 }

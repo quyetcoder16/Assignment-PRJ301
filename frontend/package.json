@@ -19,6 +19,7 @@
     "antd": "^5.24.0",
     "axios": "^1.7.9",
     "dayjs": "^1.11.13",
+    "file-saver": "^2.0.5",
     "frontend": "file:",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
