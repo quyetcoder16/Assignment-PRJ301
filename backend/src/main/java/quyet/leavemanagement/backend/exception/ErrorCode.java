@@ -17,7 +17,7 @@ public enum ErrorCode {
     USER_NOT_FOUND(2003, "User not found!", HttpStatus.NOT_FOUND),
     TOKEN_EXPIRED_EXCEPTION(1002, "Token expired!", HttpStatus.UNAUTHORIZED),
     ACCESS_TOKEN_STILL_VALID(1003, "Access token still valid!", HttpStatus.UNAUTHORIZED),
-
+    EMAIL_NOT_FOUND(1004, "Email not found!", HttpStatus.NOT_FOUND),
 
     // leave request errors from 3000->3999
     LEAVE_REQUEST_NOT_FOUND(3000, "Leave request not found!", HttpStatus.NOT_FOUND),

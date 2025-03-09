@@ -1,10 +1,15 @@
 package quyet.leavemanagement.backend.service.impl;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -24,6 +29,9 @@ import quyet.leavemanagement.backend.repository.UserRepository;
 import quyet.leavemanagement.backend.service.EmployeeService;
 import quyet.leavemanagement.backend.service.LeaveApprovalService;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,6 +46,7 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
     RequestLeaveRepository requestLeaveRepository;
     EmployeeService employeeService;
     RequestStatusRepository requestStatusRepository;
+    JavaMailSender mailSender;
 
     @Override
     @PreAuthorize("hasAuthority('VIEW_SUB_REQUEST')")
@@ -124,7 +133,6 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
         }
 
 
-
         // Xử lý theo action
         RequestStatus newStatus;
         switch (action.toUpperCase()) {
@@ -148,6 +156,9 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
         // Lưu thay đổi
         requestLeave = requestLeaveRepository.save(requestLeave);
 
+        // gửi mail
+        sendLeaveRequestStatusEmail(requestLeave);
+
         // Trả về DTO
         return LeaveRequestResponse.builder()
                 .idRequest(requestLeave.getIdRequest())
@@ -163,6 +174,52 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
                         requestLeave.getEmployeeProcess().getFullName() : null)
                 .createdAt(requestLeave.getCreatedAt())
                 .build();
+    }
+
+    private void sendLeaveRequestStatusEmail(RequestLeave requestLeave) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
+
+            User user = userRepository.findByEmployee(requestLeave.getEmployeeCreated())
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+            String employeeEmail = user.getEmail();
+            if (!StringUtils.hasText(employeeEmail)) {
+                throw new AppException(ErrorCode.EMAIL_NOT_FOUND);
+            }
+
+            ClassPathResource resource = new ClassPathResource("templates/leaveRequestStatusEmail.html");
+            String emailTemplate = new String(Files.readAllBytes(resource.getFile().toPath()), StandardCharsets.UTF_8);
+
+            String status = requestLeave.getRequestStatus().getStatusName();
+            emailTemplate = emailTemplate
+                    .replace("{employeeName}", requestLeave.getEmployeeCreated().getFullName())
+                    .replace("{createdAt}", requestLeave.getCreatedAt().format(DateTimeFormatter.ofPattern("dd-MM-yyyy HH:mm")))
+                    .replace("{status}", status.toUpperCase())
+                    .replace("{statusColor}", status.equalsIgnoreCase("Approved") ? "#4CAF50" : "#F44336")
+                    .replace("{title}", requestLeave.getTitle())
+                    .replace("{fromDate}", requestLeave.getFromDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")))
+                    .replace("{toDate}", requestLeave.getToDate().format(DateTimeFormatter.ofPattern("dd-MM-yyyy")))
+                    .replace("{reason}", requestLeave.getReason())
+                    .replace("{processedBy}", requestLeave.getEmployeeProcess().getFullName())
+                    .replace("{noteProcess}", requestLeave.getNoteProcess() != null ? requestLeave.getNoteProcess() : "N/A");
+
+            System.out.println(emailTemplate);
+
+            helper.setTo(employeeEmail);
+            helper.setSubject("Leave Request Status Update - " + status.toUpperCase());
+            helper.setText(emailTemplate, true);
+
+            mailSender.send(mimeMessage);
+            System.out.println("Email sent successfully to " + employeeEmail + " for request ID: " + requestLeave.getIdRequest());
+        } catch (MessagingException e) {
+            System.err.println("MessagingException while sending email for request " + requestLeave.getIdRequest() + ": " + e.getMessage());
+            if (e.getCause() != null) {
+                System.err.println("Cause: " + e.getCause().getMessage());
+            }
+        } catch (IOException e) {
+            System.err.println("IOException while sending email for request " + requestLeave.getIdRequest() + ": " + e.getMessage());
+        }
     }
 }
 

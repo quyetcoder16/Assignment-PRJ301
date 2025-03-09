@@ -18,6 +18,18 @@ spring:
           CharSet: utf8
           characterEncoding: UTF-8
           useUnicode: true
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${USER_NAME_MAIL_SENDER}
+    password: ${PASSWORD_MAIL_SENDER}
+    properties:
+      mail:
+        stmp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
 
 server:
   port: 8081

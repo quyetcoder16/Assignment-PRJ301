@@ -15,10 +15,7 @@ const AgendaEmployeeStatus = () => {
   const dispatch = useDispatch();
   const { subordinateEmployees } = useSelector((state) => state.agendaReducer);
 
-  const [dateRange, setDateRange] = useState([
-    dayjs("2020-01-29"),
-    dayjs("2026-02-11"),
-  ]); // Đặt mặc định theo yêu cầu
+  const [dateRange, setDateRange] = useState([dayjs(), dayjs().add(7, "day")]); // Đặt mặc định theo yêu cầu
   const [viewMode, setViewMode] = useState("day");
   const [showWarning, setShowWarning] = useState(false);
 
