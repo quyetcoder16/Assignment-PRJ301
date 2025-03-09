@@ -18,6 +18,9 @@ public enum ErrorCode {
     TOKEN_EXPIRED_EXCEPTION(1002, "Token expired!", HttpStatus.UNAUTHORIZED),
     ACCESS_TOKEN_STILL_VALID(1003, "Access token still valid!", HttpStatus.UNAUTHORIZED),
     EMAIL_NOT_FOUND(1004, "Email not found!", HttpStatus.NOT_FOUND),
+    INVALID_OTP(1005, "Invalid OTP!", HttpStatus.BAD_REQUEST),
+    OTP_EXPIRED(1006, "OTP expired!", HttpStatus.BAD_REQUEST),
+    EMAIL_SEND_FAILED(1007, "Email send failed!", HttpStatus.INTERNAL_SERVER_ERROR),
 
     // leave request errors from 3000->3999
     LEAVE_REQUEST_NOT_FOUND(3000, "Leave request not found!", HttpStatus.NOT_FOUND),

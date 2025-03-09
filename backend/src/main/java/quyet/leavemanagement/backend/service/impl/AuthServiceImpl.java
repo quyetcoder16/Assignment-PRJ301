@@ -2,37 +2,43 @@ package quyet.leavemanagement.backend.service.impl;
 
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.SignedJWT;
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.mail.MailSender;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import quyet.leavemanagement.backend.dto.request.auth.LoginRequest;
-import quyet.leavemanagement.backend.dto.request.auth.LogoutRequest;
-import quyet.leavemanagement.backend.dto.request.auth.RefreshTokenRequest;
+import quyet.leavemanagement.backend.dto.request.auth.*;
 import quyet.leavemanagement.backend.dto.response.auth.LoginResponse;
 import quyet.leavemanagement.backend.dto.response.auth.RefreshTokenResponse;
 import quyet.leavemanagement.backend.dto.response.user.UserResponse;
-import quyet.leavemanagement.backend.entity.InvalidatedToken;
-import quyet.leavemanagement.backend.entity.Role;
-import quyet.leavemanagement.backend.entity.User;
-import quyet.leavemanagement.backend.entity.UserRole;
+import quyet.leavemanagement.backend.entity.*;
 import quyet.leavemanagement.backend.exception.AppException;
 import quyet.leavemanagement.backend.exception.ErrorCode;
 import quyet.leavemanagement.backend.repository.InvalidatedTokenRepository;
+import quyet.leavemanagement.backend.repository.OtpTokenRepository;
 import quyet.leavemanagement.backend.repository.UserRepository;
 import quyet.leavemanagement.backend.service.AuthService;
 import quyet.leavemanagement.backend.service.JwtService;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
 @Slf4j
 @Service
@@ -43,13 +49,19 @@ public class AuthServiceImpl implements AuthService {
     UserRepository userRepository;
     InvalidatedTokenRepository invalidatedTokenRepository;
     JwtService jwtService;
+    OtpTokenRepository otpTokenRepository;
+    JavaMailSender mailSender;
+    PasswordEncoder passwordEncoder;
+
+    private static final int OTP_LENGTH = 6;
+    private static final int OTP_EXPIRY_MINUTES = 10;
 
     @Override
     public LoginResponse login(LoginRequest loginRequest) {
         User user = userRepository.findByEmail(loginRequest.getEmail()).orElseThrow(
                 () -> new AppException(ErrorCode.EMAIL_OR_PASSWORD_NOT_MATCH));
 
-        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
+//        PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
         if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPassword())) {
             throw new AppException(ErrorCode.EMAIL_OR_PASSWORD_NOT_MATCH);
         }
@@ -157,4 +169,84 @@ public class AuthServiceImpl implements AuthService {
             invalidatedTokenRepository.save(invalidatedToken);
         }
     }
+
+
+    @Override
+    public void sendOtp(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        String otp = generateOtp();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime expiresAt = now.plusMinutes(OTP_EXPIRY_MINUTES);
+
+        OtpToken otpToken = otpTokenRepository.findByEmail(request.getEmail())
+                .orElse(new OtpToken());
+        otpToken.setEmail(request.getEmail());
+        otpToken.setOtp(otp);
+        otpToken.setCreatedAt(now);
+        otpToken.setExpiresAt(expiresAt);
+        otpTokenRepository.save(otpToken);
+
+        sendOtpEmail(user.getEmail(), otp);
+    }
+
+    @Override
+    public void verifyOtp(VerifyOtpRequest request) {
+        OtpToken otpToken = otpTokenRepository.findByEmailAndOtp(request.getEmail(), request.getOtp())
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_OTP));
+
+        if (otpToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.OTP_EXPIRED);
+        }
+    }
+
+    @Override
+    public void resetPassword(ResetPasswordRequest request) {
+        OtpToken otpToken = otpTokenRepository.findByEmailAndOtp(request.getEmail(), request.getOtp())
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_OTP));
+
+        if (otpToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new AppException(ErrorCode.OTP_EXPIRED);
+        }
+
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        otpTokenRepository.delete(otpToken);
+    }
+
+    private String generateOtp() {
+        Random random = new Random();
+        StringBuilder otp = new StringBuilder();
+        for (int i = 0; i < OTP_LENGTH; i++) {
+            otp.append(random.nextInt(10));
+        }
+        return otp.toString();
+    }
+
+    private void sendOtpEmail(String email, String otp) {
+        try {
+            MimeMessage mimeMessage = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, StandardCharsets.UTF_8.name());
+
+            // Đọc template từ file
+            ClassPathResource resource = new ClassPathResource("templates/otp-email-template.html");
+            String emailTemplate = Files.readString(resource.getFile().toPath(), StandardCharsets.UTF_8);
+            String emailContent = String.format(emailTemplate, otp, OTP_EXPIRY_MINUTES);
+
+            helper.setTo(email);
+            helper.setSubject("Your OTP Code for Password Reset");
+            helper.setText(emailContent, true); // true: gửi dưới dạng HTML
+
+            mailSender.send(mimeMessage);
+            System.out.println("OTP email sent successfully to " + email);
+        } catch (MessagingException | IOException e) {
+            System.err.println("Failed to send OTP email to " + email + ": " + e.getMessage());
+            throw new AppException(ErrorCode.EMAIL_SEND_FAILED);
+        }
+    }
+
 }

@@ -8,9 +8,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import quyet.leavemanagement.backend.dto.request.auth.LoginRequest;
-import quyet.leavemanagement.backend.dto.request.auth.LogoutRequest;
-import quyet.leavemanagement.backend.dto.request.auth.RefreshTokenRequest;
+import quyet.leavemanagement.backend.dto.request.auth.*;
 import quyet.leavemanagement.backend.dto.response.auth.LoginResponse;
 import quyet.leavemanagement.backend.dto.response.auth.RefreshTokenResponse;
 import quyet.leavemanagement.backend.dto.response.base.ApiResponse;
@@ -47,6 +45,30 @@ public class AuthController {
         authService.logout(logoutRequest);
         return ApiResponse.<Void>builder()
                 .message("logout successful!")
+                .build();
+    }
+
+    @PostMapping("/forgot-password/send-otp")
+    public ApiResponse<Void> sendOtp(@RequestBody ForgotPasswordRequest request) {
+        authService.sendOtp(request);
+        return ApiResponse.<Void>builder()
+                .message("send otp successful!")
+                .build();
+    }
+
+    @PostMapping("/forgot-password/verify-otp")
+    public ApiResponse<Void> verifyOtp(@RequestBody VerifyOtpRequest request) {
+        authService.verifyOtp(request);
+        return ApiResponse.<Void>builder()
+                .message("verify otp successful!")
+                .build();
+    }
+
+    @PostMapping("/forgot-password/reset-password")
+    public ApiResponse<Void> resetPassword(@RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
+        return ApiResponse.<Void>builder()
+                .message("reset password successful!")
                 .build();
     }
 

@@ -1,3 +1,4 @@
+// src/components/ForgotPassword.jsx
 import { useState } from "react";
 import {
   Container,
@@ -8,8 +9,11 @@ import {
   Step,
   StepLabel,
   Box,
+  Alert,
 } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 import logo from "../../assets/img/logo.png";
+import { authService } from "../../service/authService";
 
 const ForgotPassword = () => {
   const [step, setStep] = useState(0);
@@ -17,13 +21,56 @@ const ForgotPassword = () => {
   const [otp, setOtp] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
 
-  const handleNext = () => setStep((prev) => prev + 1);
-  const handleBack = () => setStep((prev) => prev - 1);
+  const handleNext = async () => {
+    try {
+      if (step === 0) {
+        await authService.sendOtp(email);
+        setSuccess("OTP has been sent to your email!");
+        setError("");
+        setStep((prev) => prev + 1);
+      } else if (step === 1) {
+        await authService.verifyOtp(email, otp);
+        setSuccess("OTP verified successfully!");
+        setError("");
+        setStep((prev) => prev + 1);
+      }
+    } catch (err) {
+      setError(err?.response?.data?.message);
+      setSuccess("");
+    }
+  };
 
-  const handleReset = () => {
-    alert("Password reset successfully!");
-    setStep(0);
+  const handleBack = () => {
+    setStep((prev) => prev - 1);
+    setError("");
+    setSuccess("");
+  };
+
+  const handleReset = async () => {
+    try {
+      if (password !== confirmPassword) {
+        setError("Passwords do not match!");
+        return;
+      }
+      await authService.resetPassword(email, otp, password);
+      setSuccess("Password reset successfully!");
+      setError("");
+      setTimeout(() => {
+        navigate("/login"); // Chuyển hướng về trang login
+        setEmail("");
+        setOtp("");
+        setPassword("");
+        setConfirmPassword("");
+        setSuccess("");
+      }, 2000);
+    } catch (err) {
+      setError(err?.response?.data?.message);
+      setSuccess("");
+    }
   };
 
   return (
@@ -51,6 +98,17 @@ const ForgotPassword = () => {
               </Step>
             </Stepper>
 
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+            {success && (
+              <Alert severity="success" sx={{ mb: 2 }}>
+                {success}
+              </Alert>
+            )}
+
             {step === 0 && (
               <Box>
                 <TextField
@@ -66,6 +124,7 @@ const ForgotPassword = () => {
                   variant="contained"
                   color="primary"
                   onClick={handleNext}
+                  disabled={!email}
                 >
                   Send OTP
                 </Button>
@@ -86,7 +145,8 @@ const ForgotPassword = () => {
                   variant="contained"
                   color="primary"
                   onClick={handleNext}
-                  sx={{ mr: 1 }}
+                  sx={{ mb: 1 }}
+                  disabled={!otp}
                 >
                   Verify OTP
                 </Button>
@@ -124,7 +184,8 @@ const ForgotPassword = () => {
                   variant="contained"
                   color="primary"
                   onClick={handleReset}
-                  sx={{ mr: 1 }}
+                  sx={{ mb: 1 }}
+                  disabled={!password || !confirmPassword}
                 >
                   Reset Password
                 </Button>
