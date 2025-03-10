@@ -36,7 +36,6 @@ server:
   servlet:
     context-path: ${CONTEXT_PATH:/api}
 
-
 # config secret key
 jwt:
   access-token-signer-key: ${ACCESS_TOKEN:dbVkYCHQIBx33giGxnJic7noT0eagNcR}

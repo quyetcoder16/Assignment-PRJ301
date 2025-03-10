@@ -110,4 +110,44 @@ export const logoutUser = () => {
   };
 };
 
+export const loginWithGoogle = (accessToken) => {
+  return async (dispatch) => {
+    dispatch(setLoading());
+    try {
+      const { data, status } = await authService.loginWithGoogle(accessToken);
+      if (
+        status == HTTP_STATUS_CODE.SUCCESS &&
+        data?.statusCode == STATUS_CODE.SUCCESS
+      ) {
+        dispatch(
+          setUserLogin({
+            accessToken: data?.data?.accessToken,
+            refreshToken: data?.data?.refreshToken,
+            user: data?.data?.user,
+          })
+        );
+
+        dispatch(
+          showNotification({
+            type: NOTIFICATION_TYPE.success,
+            message: data?.message,
+            description: "You have logged in successfully.",
+          })
+        );
+      }
+    } catch (error) {
+      const data = error?.response?.data;
+      dispatch(
+        showNotification({
+          type: NOTIFICATION_TYPE.error,
+          message: data?.message,
+        })
+      );
+      throw error;
+    } finally {
+      dispatch(hideLoading());
+    }
+  };
+};
+
 export default authReducer.reducer;

@@ -72,4 +72,12 @@ public class AuthController {
                 .build();
     }
 
+    @PostMapping("/login-google")
+    public ApiResponse<LoginResponse> loginWithGoogle(@RequestBody GoogleLoginRequest googleLoginRequest) {
+        return ApiResponse.<LoginResponse>builder()
+                .message("login successful!")
+                .data(authService.loginWithGoogle(googleLoginRequest))
+                .build();
+    }
+
 }

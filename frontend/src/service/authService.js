@@ -45,6 +45,12 @@ const verifyOtp = async (email, otp) => {
   });
 };
 
+const loginWithGoogle = async (accessToken) => {
+  return await axios.post(`${DOMAIN}/auth/login-google`, {
+    accessToken,
+  });
+};
+
 const resetPassword = async (email, otp, newPassword) => {
   return await axios.post(`${DOMAIN}/auth/forgot-password/reset-password`, {
     email,
@@ -60,4 +66,5 @@ export const authService = {
   resetPassword,
   verifyOtp,
   sendOtp,
+  loginWithGoogle,
 };

@@ -1,4 +1,4 @@
-export const DOMAIN = "http://localhost:8081/api";
+export const DOMAIN = import.meta.env.VITE_API_URL;
 export const ACCESS_TOKEN = "ACCESS_TOKEN";
 export const REFRESH_TOKEN = "REFRESH_TOKEN";
 export const USER_INFO = "USER_INFO";

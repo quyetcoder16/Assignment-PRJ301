@@ -1,25 +1,32 @@
 import { useEffect, useState } from "react";
-import { TextField, Button, Checkbox, FormControlLabel } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Checkbox,
+  FormControlLabel,
+  CircularProgress,
+} from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
 import FacebookIcon from "@mui/icons-material/Facebook";
 import { useDispatch } from "react-redux";
-// import { loginSuccess } from "../redux/authSlice";
-// import { loginUser } from "../service/authService";
 import { useNavigate } from "react-router-dom";
 import "../../assets/styles/LoginPage.css";
 import logo from "../../assets/img/logo.png";
-import { loginUser } from "../../redux/reducer/authReducer";
+import { loginUser, loginWithGoogle } from "../../redux/reducer/authReducer";
 import {
   ACCESS_TOKEN,
   REFRESH_TOKEN,
   USER_INFO,
 } from "../../utils/setting/config";
+import { useGoogleLogin } from "@react-oauth/google";
+import { authService } from "../../service/authService";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [emailError, setEmailError] = useState("");
   const [passwordError, setPasswordError] = useState("");
+  const [loading, setLoading] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -67,6 +74,30 @@ const LoginPage = () => {
     } catch (error) {}
   };
 
+  // Thêm logic Google Login
+  const handleGoogleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+
+      try {
+        // console.log(tokenResponse);
+        const access_token = tokenResponse.access_token;
+
+        await dispatch(loginWithGoogle(access_token));
+        navigate("/");
+      } catch (error) {
+        console.log(error);
+        setEmailError(error.message || "Google login failed");
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => {
+      setEmailError("Google login failed");
+      setLoading(false);
+    },
+  });
+
   return (
     <div className="login-page">
       <div className="login-container">
@@ -75,15 +106,21 @@ const LoginPage = () => {
           <h1>Log in to your Account</h1>
           <p>Welcome back! Select method to log in:</p>
           <div className="social-login">
-            <Button className="google-btn" startIcon={<GoogleIcon />}>
-              Google
+            <Button
+              className="google-btn"
+              startIcon={<GoogleIcon />}
+              onClick={() => handleGoogleLogin()} // Thêm sự kiện click cho Google Login
+              disabled={loading}
+            >
+              {loading ? <CircularProgress size={24} /> : "Google"}
             </Button>
             <Button
               className="facebook-btn"
               startIcon={<FacebookIcon />}
               style={{ backgroundColor: "#1877F2", color: "white" }}
+              disabled={loading}
             >
-              Facebook
+              {loading ? <CircularProgress size={24} /> : "Facebook"}
             </Button>
           </div>
           <p>or continue with email</p>

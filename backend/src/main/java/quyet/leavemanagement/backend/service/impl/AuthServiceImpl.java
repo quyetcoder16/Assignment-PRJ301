@@ -11,12 +11,16 @@ import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.ResponseEntity;
 import org.springframework.mail.MailSender;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import quyet.leavemanagement.backend.dto.request.auth.*;
 import quyet.leavemanagement.backend.dto.response.auth.LoginResponse;
 import quyet.leavemanagement.backend.dto.response.auth.RefreshTokenResponse;
@@ -35,10 +39,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.text.ParseException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -52,6 +53,7 @@ public class AuthServiceImpl implements AuthService {
     OtpTokenRepository otpTokenRepository;
     JavaMailSender mailSender;
     PasswordEncoder passwordEncoder;
+    RestTemplate restTemplate;
 
     private static final int OTP_LENGTH = 6;
     private static final int OTP_EXPIRY_MINUTES = 10;
@@ -248,5 +250,71 @@ public class AuthServiceImpl implements AuthService {
             throw new AppException(ErrorCode.EMAIL_SEND_FAILED);
         }
     }
+
+    @Override
+    public LoginResponse loginWithGoogle(GoogleLoginRequest request) {
+        try {
+            String accessToken = request.getAccessToken();
+            if (accessToken == null || accessToken.isEmpty()) {
+                throw new AppException(ErrorCode.INVALID_GOOGLE_TOKEN);
+            }
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setBearerAuth(accessToken);
+            HttpEntity<String> entity = new HttpEntity<>(headers);
+
+            ResponseEntity<Map> response = restTemplate.exchange(
+                    "https://www.googleapis.com/oauth2/v3/userinfo",
+                    HttpMethod.GET,
+                    entity,
+                    Map.class
+            );
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> userInfo = response.getBody();
+                String email = (String) userInfo.get("email");
+
+                if (email == null) {
+                    throw new AppException(ErrorCode.INVALID_GOOGLE_TOKEN);
+                }
+
+                User user = userRepository.findByEmail(email)
+                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+                List<String> permissions = new ArrayList<>();
+                List<UserRole> listUserRole = user.getListUserRole();
+                if (listUserRole != null && listUserRole.size() > 0) {
+                    listUserRole.forEach(userRole -> {
+                        Role role = userRole.getRole();
+                        if (role != null) {
+                            role.getListRolePermission().forEach(rolePermission -> {
+                                permissions.add(rolePermission.getPermission().getPermissionName());
+                            });
+                        }
+                    });
+                }
+
+
+                return LoginResponse.builder()
+                        .accessToken(jwtService.generateAccessToken(user))
+                        .refreshToken(jwtService.generateRefreshToken(user))
+                        .user(UserResponse.builder()
+                                .userId(user.getUserId())
+                                .email(user.getEmail())
+                                .fullName(user.getEmployee().getFullName())
+                                .direct_management((user.getEmployee().getManager() != null) ? user.getEmployee().getManager().getFullName() : "")
+                                .phoneNumber(user.getEmployee().getPhone())
+                                .address(user.getEmployee().getAddress())
+                                .permissions(permissions)
+                                .build())
+                        .build();
+            } else {
+                throw new AppException(ErrorCode.GOOGLE_LOGIN_FAILED);
+            }
+        } catch (Exception e) {
+            throw new AppException(ErrorCode.GOOGLE_LOGIN_FAILED);
+        }
+    }
+
 
 }

@@ -21,7 +21,8 @@ public enum ErrorCode {
     INVALID_OTP(1005, "Invalid OTP!", HttpStatus.BAD_REQUEST),
     OTP_EXPIRED(1006, "OTP expired!", HttpStatus.BAD_REQUEST),
     EMAIL_SEND_FAILED(1007, "Email send failed!", HttpStatus.INTERNAL_SERVER_ERROR),
-
+    INVALID_GOOGLE_TOKEN(1008, "Invalid Google Token!", HttpStatus.BAD_REQUEST),
+    GOOGLE_LOGIN_FAILED(1009, "Google Login failed!", HttpStatus.INTERNAL_SERVER_ERROR),
     // leave request errors from 3000->3999
     LEAVE_REQUEST_NOT_FOUND(3000, "Leave request not found!", HttpStatus.NOT_FOUND),
     REQUEST_STATUS_NOT_FOUND(3001, "Request status not found!", HttpStatus.NOT_FOUND),
