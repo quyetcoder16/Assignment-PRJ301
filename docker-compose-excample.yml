@@ -1,0 +1,57 @@
+# docker-compose.yml
+version: "3.8"
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8081"
+    environment:
+      - DATABASE_URL=jdbc:sqlserver://mssql:1433;databaseName=your_database;encrypt=true;trustServerCertificate=true
+      - DATABASE_USERNAME=sa
+      - DATABASE_PASSWORD=YourStrong@Passw0rd
+      - GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+      - JWT_SECRET=your_jwt_secret_key
+      - PORT=8081
+      - USER_NAME_MAIL_SENDER=YourEmail
+      - PASSWORD_MAIL_SENDER=YourAppPassword
+    depends_on:
+      - mssql
+    networks:
+      - app-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "4173:4173"
+    environment:
+      - VITE_API_URL=http://backend:8081
+      - VITE_GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+    depends_on:
+      - backend
+    networks:
+      - app-network
+
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=YourStrong@Passw0rd
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mssql-data:
