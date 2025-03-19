@@ -17,3 +17,10 @@ export const STATUS_CODE = {
 export const HTTP_STATUS_CODE = {
   SUCCESS: 200,
 };
+
+export const OAuthConfig = {
+  clientId:
+    "571904821045-tsgpln2109kio131mdfnbg9l45j8lai4.apps.googleusercontent.com",
+  redirectUri: "http://localhost:5173/authenticate",
+  authUri: "https://accounts.google.com/o/oauth2/auth",
+};

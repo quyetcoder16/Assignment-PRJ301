@@ -4,10 +4,7 @@ import com.nimbusds.jose.JOSEException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import quyet.leavemanagement.backend.dto.request.auth.*;
 import quyet.leavemanagement.backend.dto.response.auth.LoginResponse;
 import quyet.leavemanagement.backend.dto.response.auth.RefreshTokenResponse;
@@ -72,11 +69,12 @@ public class AuthController {
                 .build();
     }
 
-    @PostMapping("/login-google")
-    public ApiResponse<LoginResponse> loginWithGoogle(@RequestBody GoogleLoginRequest googleLoginRequest) {
+
+    @PostMapping("/outbound/authentication")
+    public ApiResponse<LoginResponse> authenticationWithGoogle(@RequestParam("code") String code) {
         return ApiResponse.<LoginResponse>builder()
                 .message("login successful!")
-                .data(authService.loginWithGoogle(googleLoginRequest))
+                .data(authService.loginWithGoogle(code))
                 .build();
     }
 

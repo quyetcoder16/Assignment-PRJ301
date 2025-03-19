@@ -15,6 +15,7 @@ import logo from "../../assets/img/logo.png";
 import { loginUser, loginWithGoogle } from "../../redux/reducer/authReducer";
 import {
   ACCESS_TOKEN,
+  OAuthConfig,
   REFRESH_TOKEN,
   USER_INFO,
 } from "../../utils/setting/config";
@@ -75,28 +76,17 @@ const LoginPage = () => {
   };
 
   // Thêm logic Google Login
-  const handleGoogleLogin = useGoogleLogin({
-    onSuccess: async (tokenResponse) => {
-      setLoading(true);
+  const handleGoogleLogin = () => {
+    const callbackUrl = OAuthConfig.redirectUri;
+    const authUrl = OAuthConfig.authUri;
+    const googleClientId = OAuthConfig.clientId;
 
-      try {
-        // console.log(tokenResponse);
-        const access_token = tokenResponse.access_token;
+    const targetUrl = `${authUrl}?redirect_uri=${encodeURIComponent(
+      callbackUrl
+    )}&response_type=code&client_id=${googleClientId}&scope=openid%20email%20profile`;
 
-        await dispatch(loginWithGoogle(access_token));
-        navigate("/");
-      } catch (error) {
-        console.log(error);
-        setEmailError(error.message || "Google login failed");
-      } finally {
-        setLoading(false);
-      }
-    },
-    onError: () => {
-      setEmailError("Google login failed");
-      setLoading(false);
-    },
-  });
+    window.location.href = targetUrl;
+  };
 
   return (
     <div className="login-page">

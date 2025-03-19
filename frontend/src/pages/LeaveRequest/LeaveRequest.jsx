@@ -189,7 +189,7 @@ const LeaveRequest = () => {
       key: "actions",
       render: (_, record) =>
         record.nameRequestStatus === "In progress" &&
-        dayjs().isBefore(dayjs(record.fromDate), "day") && (
+        dayjs().isBefore(dayjs(record.fromDate).add(1, "day"), "day") && (
           <>
             <Button type="link" onClick={() => openUpdateModal(record)}>
               <i className="fa-solid fa-pen-to-square"></i>

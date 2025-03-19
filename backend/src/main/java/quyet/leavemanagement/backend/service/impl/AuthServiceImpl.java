@@ -33,6 +33,7 @@ import quyet.leavemanagement.backend.repository.OtpTokenRepository;
 import quyet.leavemanagement.backend.repository.UserRepository;
 import quyet.leavemanagement.backend.service.AuthService;
 import quyet.leavemanagement.backend.service.JwtService;
+import quyet.leavemanagement.backend.service.OutboundAuthService;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -53,7 +54,7 @@ public class AuthServiceImpl implements AuthService {
     OtpTokenRepository otpTokenRepository;
     JavaMailSender mailSender;
     PasswordEncoder passwordEncoder;
-    RestTemplate restTemplate;
+    OutboundAuthService outboundAuthService;
 
     private static final int OTP_LENGTH = 6;
     private static final int OTP_EXPIRY_MINUTES = 10;
@@ -252,69 +253,49 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public LoginResponse loginWithGoogle(GoogleLoginRequest request) {
-        try {
-            String accessToken = request.getAccessToken();
-            if (accessToken == null || accessToken.isEmpty()) {
-                throw new AppException(ErrorCode.INVALID_GOOGLE_TOKEN);
+    public LoginResponse loginWithGoogle(String code) {
+        var exchangeTokenResponse = outboundAuthService.exchangeToken(code);
+
+        var userInfo = outboundAuthService.getUserInfo(exchangeTokenResponse.getAccessToken());
+
+        if (userInfo.getEmail() != null) {
+
+            String email = userInfo.getEmail();
+
+            User user = userRepository.findByEmail(email)
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+            List<String> permissions = new ArrayList<>();
+            List<UserRole> listUserRole = user.getListUserRole();
+            if (listUserRole != null && listUserRole.size() > 0) {
+                listUserRole.forEach(userRole -> {
+                    Role role = userRole.getRole();
+                    if (role != null) {
+                        role.getListRolePermission().forEach(rolePermission -> {
+                            permissions.add(rolePermission.getPermission().getPermissionName());
+                        });
+                    }
+                });
             }
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBearerAuth(accessToken);
-            HttpEntity<String> entity = new HttpEntity<>(headers);
 
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    "https://www.googleapis.com/oauth2/v3/userinfo",
-                    HttpMethod.GET,
-                    entity,
-                    Map.class
-            );
+            return LoginResponse.builder()
+                    .accessToken(jwtService.generateAccessToken(user))
+                    .refreshToken(jwtService.generateRefreshToken(user))
+                    .user(UserResponse.builder()
+                            .userId(user.getUserId())
+                            .email(user.getEmail())
+                            .fullName(user.getEmployee().getFullName())
+                            .direct_management((user.getEmployee().getManager() != null) ? user.getEmployee().getManager().getFullName() : "")
+                            .phoneNumber(user.getEmployee().getPhone())
+                            .address(user.getEmployee().getAddress())
+                            .permissions(permissions)
+                            .build())
+                    .build();
 
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                Map<String, Object> userInfo = response.getBody();
-                String email = (String) userInfo.get("email");
-
-                if (email == null) {
-                    throw new AppException(ErrorCode.INVALID_GOOGLE_TOKEN);
-                }
-
-                User user = userRepository.findByEmail(email)
-                        .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-
-                List<String> permissions = new ArrayList<>();
-                List<UserRole> listUserRole = user.getListUserRole();
-                if (listUserRole != null && listUserRole.size() > 0) {
-                    listUserRole.forEach(userRole -> {
-                        Role role = userRole.getRole();
-                        if (role != null) {
-                            role.getListRolePermission().forEach(rolePermission -> {
-                                permissions.add(rolePermission.getPermission().getPermissionName());
-                            });
-                        }
-                    });
-                }
-
-
-                return LoginResponse.builder()
-                        .accessToken(jwtService.generateAccessToken(user))
-                        .refreshToken(jwtService.generateRefreshToken(user))
-                        .user(UserResponse.builder()
-                                .userId(user.getUserId())
-                                .email(user.getEmail())
-                                .fullName(user.getEmployee().getFullName())
-                                .direct_management((user.getEmployee().getManager() != null) ? user.getEmployee().getManager().getFullName() : "")
-                                .phoneNumber(user.getEmployee().getPhone())
-                                .address(user.getEmployee().getAddress())
-                                .permissions(permissions)
-                                .build())
-                        .build();
-            } else {
-                throw new AppException(ErrorCode.GOOGLE_LOGIN_FAILED);
-            }
-        } catch (Exception e) {
+        } else {
             throw new AppException(ErrorCode.GOOGLE_LOGIN_FAILED);
         }
     }
-
 
 }

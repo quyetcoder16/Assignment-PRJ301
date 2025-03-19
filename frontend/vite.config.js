@@ -5,7 +5,7 @@ import react from "@vitejs/plugin-react-swc";
 export default defineConfig({
   plugins: [react()],
   server: {
-    port: 4173, // Đảm bảo port này khớp với môi trường local
+    port: 5173, // Đảm bảo port này khớp với môi trường local
     host: true, // Cho phép truy cập từ ngoài local
   },
 });

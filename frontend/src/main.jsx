@@ -13,22 +13,22 @@ import { Provider } from "react-redux";
 import { ConfigProvider } from "antd";
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
-    <ConfigProvider
-      theme={{
-        token: {
-          // Seed Token
-          // colorPrimary: "#50CDDA",
-          borderRadius: 2,
+  // <StrictMode>
+  <ConfigProvider
+    theme={{
+      token: {
+        // Seed Token
+        // colorPrimary: "#50CDDA",
+        borderRadius: 2,
 
-          // Alias Token
-          // colorBgContainer: "#D9E3EE",
-        },
-      }}
-    >
-      <Provider store={store}>
-        <App />
-      </Provider>
-    </ConfigProvider>
-  </StrictMode>
+        // Alias Token
+        // colorBgContainer: "#D9E3EE",
+      },
+    }}
+  >
+    <Provider store={store}>
+      <App />
+    </Provider>
+  </ConfigProvider>
+  // </StrictMode>
 );

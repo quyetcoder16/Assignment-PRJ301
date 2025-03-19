@@ -23,6 +23,6 @@ public interface AuthService {
 
     void resetPassword(ResetPasswordRequest request);
 
-    LoginResponse loginWithGoogle(GoogleLoginRequest request);
+    LoginResponse loginWithGoogle(String code);
 
 }
