@@ -55,7 +55,8 @@ public class MyLeaveRequestServiceImpl implements MyLeaveRequestService {
                 new AppException(ErrorCode.USER_NOT_FOUND));
 
         // Chuyển đổi ngày tạo đơn từ String sang LocalDateTime
-        LocalDateTime startCreated = null, endCreated = null;
+        LocalDateTime startCreated = null;
+        LocalDateTime endCreated = null;
         if (StringUtils.hasText(startCreatedAt)) {
             startCreated = LocalDateTime.parse(startCreatedAt, DateTimeFormatter.ISO_DATE_TIME);
         }
@@ -64,16 +65,14 @@ public class MyLeaveRequestServiceImpl implements MyLeaveRequestService {
         }
 
         // Chuyển đổi ngày nghỉ từ String sang LocalDate
-        LocalDate leaveStart = null, leaveEnd = null;
+        LocalDate leaveStart = null;
+        LocalDate leaveEnd = null;
         if (StringUtils.hasText(leaveDateStart)) {
             leaveStart = LocalDate.parse(leaveDateStart, DateTimeFormatter.ISO_DATE);
         }
         if (StringUtils.hasText(leaveDateEnd)) {
             leaveEnd = LocalDate.parse(leaveDateEnd, DateTimeFormatter.ISO_DATE);
         }
-
-//        Pageable sortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(Sort.Direction.DESC, "idRequest"));
-
 
         Page<RequestLeave> leaveRequests = requestLeaveRepository.findLeaveRequestsByFilters(
                 startCreated, endCreated, leaveStart, leaveEnd, leaveTypeId, statusId, user.getEmployee().getEmpId().longValue(), pageable

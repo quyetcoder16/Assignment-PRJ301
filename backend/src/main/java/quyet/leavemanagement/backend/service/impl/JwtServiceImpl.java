@@ -3,8 +3,6 @@ package quyet.leavemanagement.backend.service.impl;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
-import com.nimbusds.jose.crypto.RSASSASigner;
-import com.nimbusds.jwt.JWT;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
 import lombok.AccessLevel;
@@ -36,30 +34,29 @@ public class JwtServiceImpl implements JwtService {
 
     @NonFinal
     @Value("${jwt.access-token-signer-key}")
-    String ACCESS_TOKEN_SIGNER_KEY;
+    String accessTokenSignerKey;
 
     @NonFinal
     @Value("${jwt.refresh-token-signer-key}")
-    String REFRESH_TOKEN_SIGNER_KEY;
+    String refreshTokenSignerKey;
 
     @NonFinal
     @Value("${jwt.access-token-duration}")
-    int ACCESS_TOKEN_DURATION;
+    int accessTokenDuration;
 
     @NonFinal
     @Value("${jwt.refresh-token-duration}")
-    int REFRESH_TOKEN_DURATION;
+    int refreshTokenDuration;
 
     private SignedJWT verifyAndParseToken(String token, boolean isRefresh) throws JOSEException, ParseException {
-        String signerKey = isRefresh ? REFRESH_TOKEN_SIGNER_KEY : ACCESS_TOKEN_SIGNER_KEY;
+        String signerKey = isRefresh ? refreshTokenSignerKey : accessTokenSignerKey;
 
         // check token is created by server using HMAC(hash base message authentication) using secret key
         JWSVerifier verifier = new MACVerifier(signerKey);
         SignedJWT signedJWT = SignedJWT.parse(token);
         boolean verified = signedJWT.verify(verifier);
 
-        // check verify toke
-
+        // check verify token
         if (!verified) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
@@ -74,7 +71,6 @@ public class JwtServiceImpl implements JwtService {
 
     @Override
     public SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException {
-
         SignedJWT signedJWT = verifyAndParseToken(token, isRefresh);
 
         // check expiration time of token
@@ -106,7 +102,7 @@ public class JwtServiceImpl implements JwtService {
     private String buildScope(User user) {
         StringJoiner scopeJoiner = new StringJoiner(" ");
         List<UserRole> listUserRole = user.getListUserRole();
-        if (listUserRole == null || listUserRole.size() == 0) {
+        if (listUserRole == null || listUserRole.isEmpty()) {
             return scopeJoiner.toString();
         }
 
@@ -115,12 +111,12 @@ public class JwtServiceImpl implements JwtService {
             if (role == null) {
                 return;
             }
-//            add role to scope
+            // add role to scope
             scopeJoiner.add("ROLE_" + role.getRoleName());
 
-//            get permission add to scope
+            // get permission add to scope
             List<RolePermission> listPermission = role.getListRolePermission();
-            if (listPermission == null || listPermission.size() == 0) {
+            if (listPermission == null || listPermission.isEmpty()) {
                 return;
             }
             listPermission.forEach(rolePermission -> {
@@ -130,7 +126,6 @@ public class JwtServiceImpl implements JwtService {
                 }
                 scopeJoiner.add(permission.getPermissionName());
             });
-
         });
         return scopeJoiner.toString();
     }
@@ -142,18 +137,16 @@ public class JwtServiceImpl implements JwtService {
                 .subject(user.getUserId().toString())
                 .issuer("quyet.leavemanagement.backend")
                 .issueTime(new Date())
-                .expirationTime(new Date(Instant.now().plus(ACCESS_TOKEN_DURATION, ChronoUnit.SECONDS).toEpochMilli()))
+                .expirationTime(new Date(Instant.now().plus(accessTokenDuration, ChronoUnit.SECONDS).toEpochMilli()))
                 .claim("scope", buildScope(user))
                 .jwtID(UUID.randomUUID().toString())
                 .claim("email", user.getEmail())
                 .build();
         try {
             SignedJWT signedJWT = new SignedJWT(jwsHeader, jwtClaimsSet);
-            JWSSigner signer = new MACSigner(ACCESS_TOKEN_SIGNER_KEY.getBytes());
+            JWSSigner signer = new MACSigner(accessTokenSignerKey.getBytes());
             signedJWT.sign(signer);
             return signedJWT.serialize();
-        } catch (KeyLengthException e) {
-            throw new AppException(ErrorCode.TOKEN_CANNOT_CREATE_EXCEPTION);
         } catch (JOSEException e) {
             throw new AppException(ErrorCode.TOKEN_CANNOT_CREATE_EXCEPTION);
         }
@@ -166,20 +159,16 @@ public class JwtServiceImpl implements JwtService {
                 .subject(user.getUserId().toString())
                 .issuer("quyet.leavemanagement.backend")
                 .issueTime(new Date())
-                .expirationTime(new Date(Instant.now().plus(REFRESH_TOKEN_DURATION, ChronoUnit.SECONDS).toEpochMilli()))
+                .expirationTime(new Date(Instant.now().plus(refreshTokenDuration, ChronoUnit.SECONDS).toEpochMilli()))
                 .jwtID(UUID.randomUUID().toString())
                 .build();
         try {
             SignedJWT signedJWT = new SignedJWT(jwsHeader, jwtClaimsSet);
-            JWSSigner signer = new MACSigner(REFRESH_TOKEN_SIGNER_KEY.getBytes());
+            JWSSigner signer = new MACSigner(refreshTokenSignerKey.getBytes());
             signedJWT.sign(signer);
             return signedJWT.serialize();
-        } catch (KeyLengthException e) {
-            throw new AppException(ErrorCode.TOKEN_CANNOT_CREATE_EXCEPTION);
         } catch (JOSEException e) {
             throw new AppException(ErrorCode.TOKEN_CANNOT_CREATE_EXCEPTION);
         }
     }
-
-
 }
