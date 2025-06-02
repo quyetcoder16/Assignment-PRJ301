@@ -5,6 +5,8 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -16,7 +18,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import quyet.leavemanagement.backend.dto.response.leave_request.LeaveRequestResponse;
-import quyet.leavemanagement.backend.dto.response.my_leave_request.MyLeaveRequestResponse;
 import quyet.leavemanagement.backend.entity.Employee;
 import quyet.leavemanagement.backend.entity.RequestLeave;
 import quyet.leavemanagement.backend.entity.RequestStatus;
@@ -42,6 +43,8 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class LeaveApprovalServiceImpl implements LeaveApprovalService {
 
+    private static final Logger logger = LoggerFactory.getLogger(LeaveApprovalServiceImpl.class);
+
     UserRepository userRepository;
     RequestLeaveRepository requestLeaveRepository;
     EmployeeService employeeService;
@@ -50,22 +53,26 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
 
     @Override
     @PreAuthorize("hasAuthority('VIEW_SUB_REQUEST')")
-    public Page<LeaveRequestResponse> filterAllLeaveRequests(String startCreatedAt, String endCreatedAt, String leaveDateStart, String leaveDateEnd, int leaveTypeId, int statusId, String employeeName, Pageable pageable) {
+    public Page<LeaveRequestResponse> filterAllLeaveRequests(
+            String startCreatedAt, String endCreatedAt,
+            String leaveDateStart, String leaveDateEnd,
+            int leaveTypeId, int statusId,
+            String employeeName, Pageable pageable) {
+
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Long userId = Long.valueOf(auth.getName());
-        User user = userRepository.findByUserId(userId).orElseThrow(() ->
-                new AppException(ErrorCode.USER_NOT_FOUND));
-
+        User user = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         Long managerId = user.getEmployee().getEmpId();
 
-        // Lấy danh sách emp_id của nhân viên dưới quyền
         List<Long> subordinateIds = employeeService.getSubordinateEmployeeIds(managerId);
         if (subordinateIds.isEmpty()) {
-            return Page.empty(pageable); // Trả về trang rỗng nếu không có nhân viên dưới quyền
+            return Page.empty(pageable);
         }
 
-        // Chuyển đổi ngày tạo đơn từ String sang LocalDateTime
-        LocalDateTime startCreated = null, endCreated = null;
+        LocalDateTime startCreated = null;
+        LocalDateTime endCreated = null;
+
         if (StringUtils.hasText(startCreatedAt)) {
             startCreated = LocalDateTime.parse(startCreatedAt, DateTimeFormatter.ISO_DATE_TIME);
         }
@@ -73,7 +80,6 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
             endCreated = LocalDateTime.parse(endCreatedAt, DateTimeFormatter.ISO_DATE_TIME);
         }
 
-        // Chuyển đổi ngày nghỉ từ String sang LocalDate
         LocalDate leaveStart = null, leaveEnd = null;
         if (StringUtils.hasText(leaveDateStart)) {
             leaveStart = LocalDate.parse(leaveDateStart, DateTimeFormatter.ISO_DATE);
@@ -82,7 +88,6 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
             leaveEnd = LocalDate.parse(leaveDateEnd, DateTimeFormatter.ISO_DATE);
         }
 
-        // Chuẩn bị employeeName cho LIKE
         String employeeNameFilter = StringUtils.hasText(employeeName) ? "%" + employeeName + "%" : null;
 
         Page<RequestLeave> leaveRequests = requestLeaveRepository.findAllLeaveRequestsForManager(
@@ -111,55 +116,45 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
     public LeaveRequestResponse processLeaveRequest(Integer idRequest, String noteProcess, String action) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         Long userId = Long.valueOf(auth.getName());
-        User currentUser = userRepository.findByUserId(userId).orElseThrow(() ->
-                new AppException(ErrorCode.USER_NOT_FOUND));
+        User currentUser = userRepository.findByUserId(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
         Employee currentEmployee = currentUser.getEmployee();
         Long managerId = currentEmployee.getEmpId();
 
-        // Tìm đơn nghỉ theo idRequest
         RequestLeave requestLeave = requestLeaveRepository.findById(idRequest)
                 .orElseThrow(() -> new AppException(ErrorCode.REQUEST_NOT_FOUND));
 
-        // Kiểm tra xem đơn có thuộc nhân viên dưới quyền không
         List<Long> subordinateIds = employeeService.getSubordinateEmployeeIds(managerId);
         if (!subordinateIds.contains(requestLeave.getEmployeeCreated().getEmpId())) {
             throw new AppException(ErrorCode.UNAUTHORIZED);
         }
 
-        // Kiểm tra nếu startDate của đơn nghỉ nhỏ hơn ngày hiện tại, không cho phép phê duyệt hoặc sửa
         if (requestLeave.getFromDate().isBefore(LocalDate.now())) {
             throw new AppException(ErrorCode.DO_NOT_EDIT_LEAVE_IN_THE_PASS);
         }
 
-
-        // Xử lý theo action
         RequestStatus newStatus;
         switch (action.toUpperCase()) {
             case "APPROVE":
-                newStatus = requestStatusRepository.findById(2L) // Giả sử 2 = "Approved"
+                newStatus = requestStatusRepository.findById(2L)
                         .orElseThrow(() -> new AppException(ErrorCode.REQUEST_STATUS_NOT_FOUND));
                 break;
             case "REJECT":
-                newStatus = requestStatusRepository.findById(3L) // Giả sử 3 = "Rejected"
+                newStatus = requestStatusRepository.findById(3L)
                         .orElseThrow(() -> new AppException(ErrorCode.REQUEST_STATUS_NOT_FOUND));
                 break;
             default:
-                throw new AppException(ErrorCode.INVALID_ACTION); // Thêm mã lỗi mới nếu cần
+                throw new AppException(ErrorCode.INVALID_ACTION);
         }
 
-        // Cập nhật trạng thái, ghi chú và người xử lý
         requestLeave.setRequestStatus(newStatus);
         requestLeave.setNoteProcess(noteProcess);
         requestLeave.setEmployeeProcess(currentEmployee);
 
-        // Lưu thay đổi
         requestLeave = requestLeaveRepository.save(requestLeave);
-
-        // gửi mail
         sendLeaveRequestStatusEmail(requestLeave);
 
-        // Trả về DTO
         return LeaveRequestResponse.builder()
                 .idRequest(requestLeave.getIdRequest())
                 .title(requestLeave.getTitle())
@@ -204,22 +199,18 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
                     .replace("{processedBy}", requestLeave.getEmployeeProcess().getFullName())
                     .replace("{noteProcess}", requestLeave.getNoteProcess() != null ? requestLeave.getNoteProcess() : "N/A");
 
-            System.out.println(emailTemplate);
+            logger.info(emailTemplate);
 
             helper.setTo(employeeEmail);
             helper.setSubject("Leave Request Status Update - " + status.toUpperCase());
             helper.setText(emailTemplate, true);
 
             mailSender.send(mimeMessage);
-            System.out.println("Email sent successfully to " + employeeEmail + " for request ID: " + requestLeave.getIdRequest());
+            logger.info("Email sent successfully to {} for request ID: {}", employeeEmail, requestLeave.getIdRequest());
         } catch (MessagingException e) {
-            System.err.println("MessagingException while sending email for request " + requestLeave.getIdRequest() + ": " + e.getMessage());
-            if (e.getCause() != null) {
-                System.err.println("Cause: " + e.getCause().getMessage());
-            }
+            logger.error("MessagingException while sending email for request {}: {}", requestLeave.getIdRequest(), e.getMessage(), e);
         } catch (IOException e) {
-            System.err.println("IOException while sending email for request " + requestLeave.getIdRequest() + ": " + e.getMessage());
+            logger.error("IOException while sending email for request {}: {}", requestLeave.getIdRequest(), e.getMessage(), e);
         }
     }
 }
-

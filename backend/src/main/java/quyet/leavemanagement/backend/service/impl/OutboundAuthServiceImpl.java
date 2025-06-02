@@ -23,36 +23,34 @@ public class OutboundAuthServiceImpl implements OutboundAuthService {
 
     @NonFinal
     @Value("${outbound.identity.token-url}")
-    String TOKEN_URL;
+    String tokenUrl;
 
     @NonFinal
     @Value("${outbound.identity.client-id}")
-    String CLIENT_ID;
+    String clientId;
 
     @NonFinal
     @Value("${outbound.identity.client-secret}")
-    String CLIENT_SECRET;
+    String clientSecret;
 
     @NonFinal
     @Value("${outbound.identity.redirect-uri}")
-    String REDIRECT_URI;
+    String redirectUri;
 
     @NonFinal
     @Value("${outbound.identity.userinfo-url}")
-    String USER_INFO_URL;
+    String userInfoUrl;
 
-    @NonFinal
-    final String GRANT_TYPE = "authorization_code";
-
+    private static final String GRANT_TYPE = "authorization_code";
 
     @Override
     public ExchangeTokenResponse exchangeToken(String code) {
         // Chuẩn bị body cho yêu cầu POST
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
         body.add("code", code);
-        body.add("client_id", CLIENT_ID);
-        body.add("client_secret",CLIENT_SECRET);
-        body.add("redirect_uri", REDIRECT_URI);
+        body.add("client_id", clientId);
+        body.add("client_secret", clientSecret);
+        body.add("redirect_uri", redirectUri);
         body.add("grant_type", GRANT_TYPE);
 
         // Thiết lập header
@@ -64,7 +62,7 @@ public class OutboundAuthServiceImpl implements OutboundAuthService {
 
         // Gửi yêu cầu POST và nhận phản hồi
         ResponseEntity<ExchangeTokenResponse> response = restTemplate.exchange(
-                TOKEN_URL,
+                tokenUrl,
                 HttpMethod.POST,
                 entity,
                 ExchangeTokenResponse.class
@@ -83,7 +81,7 @@ public class OutboundAuthServiceImpl implements OutboundAuthService {
 
         // Gửi yêu cầu GET với query parameter alt=json
         ResponseEntity<UserInfoGoogleResponse> response = restTemplate.exchange(
-                USER_INFO_URL + "?alt=json",
+                userInfoUrl + "?alt=json",
                 HttpMethod.GET,
                 entity,
                 UserInfoGoogleResponse.class
