@@ -70,6 +70,7 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
             return Page.empty(pageable);
         }
 
+        // Chuyển đổi ngày tạo đơn từ String sang LocalDateTime
         LocalDateTime startCreated = null;
         LocalDateTime endCreated = null;
 
@@ -80,7 +81,11 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
             endCreated = LocalDateTime.parse(endCreatedAt, DateTimeFormatter.ISO_DATE_TIME);
         }
 
-        LocalDate leaveStart = null, leaveEnd = null;
+
+        // Chuyển đổi ngày nghỉ từ String sang LocalDate
+        LocalDate leaveStart = null;
+        LocalDate leaveEnd = null;
+
         if (StringUtils.hasText(leaveDateStart)) {
             leaveStart = LocalDate.parse(leaveDateStart, DateTimeFormatter.ISO_DATE);
         }
@@ -133,6 +138,7 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
         if (requestLeave.getFromDate().isBefore(LocalDate.now())) {
             throw new AppException(ErrorCode.DO_NOT_EDIT_LEAVE_IN_THE_PASS);
         }
+
 
         RequestStatus newStatus;
         switch (action.toUpperCase()) {
@@ -199,7 +205,9 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
                     .replace("{processedBy}", requestLeave.getEmployeeProcess().getFullName())
                     .replace("{noteProcess}", requestLeave.getNoteProcess() != null ? requestLeave.getNoteProcess() : "N/A");
 
+
             logger.info(emailTemplate);
+
 
             helper.setTo(employeeEmail);
             helper.setSubject("Leave Request Status Update - " + status.toUpperCase());
@@ -209,8 +217,15 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
             logger.info("Email sent successfully to {} for request ID: {}", employeeEmail, requestLeave.getIdRequest());
         } catch (MessagingException e) {
             logger.error("MessagingException while sending email for request {}: {}", requestLeave.getIdRequest(), e.getMessage(), e);
+
+            if (e.getCause() != null) {
+                logger.error("Cause: {}", e.getCause().getMessage());
+            }
+
         } catch (IOException e) {
             logger.error("IOException while sending email for request {}: {}", requestLeave.getIdRequest(), e.getMessage(), e);
         }
     }
+
 }
+

@@ -22,6 +22,7 @@ public class CustomJwtDecoder implements JwtDecoder {
     private String accessTokenSignerKey;
 
     private final JwtService jwtService;
+  
     private NimbusJwtDecoder nimbusJwtDecoder = null;
 
     public CustomJwtDecoder(JwtService jwtService) {

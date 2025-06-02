@@ -3,6 +3,7 @@ package quyet.leavemanagement.backend.service.impl;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import lombok.extern.log4j.Log4j2;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -32,70 +33,41 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+@Log4j2
 public class AgendaServiceImpl implements AgendaService {
     EmployeeService employeeService;
     RequestLeaveRepository requestLeaveRepository;
     UserRepository userRepository;
-//
-//    @Override
-//    @PreAuthorize("hasAuthority('VIEW_AGENDA')")
-//    public List<SimpleEmployeeStatusResponse> getSimpleEmployeeStatus(LocalDate startDate, LocalDate endDate) {
-//        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-//        Long userId = Long.valueOf(auth.getName());
-//        User currentUser = userRepository.findByUserId(userId)
-//                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-//
-//        List<Employee> subordinates = employeeService.getAllSubordinateEmployees(currentUser.getEmployee().getEmpId());
-//
-//        if (subordinates.isEmpty()) {
-//            return new ArrayList<>() ;
-//        }
-//
-//        List<SimpleEmployeeStatusResponse> result = new ArrayList<>();
-//
-//        for (Employee emp : subordinates) {
-//            List<RequestLeave> leaveRequests = requestLeaveRepository.findByEmployeeCreatedAndFromDateLessThanEqualAndToDateGreaterThanEqual(
-//                    emp, endDate, startDate);
-//
-//            List<String> leaveDays = leaveRequests.stream()
-//                    .filter(req -> req.getRequestStatus().getStatusName().equals("Approved"))
-//                    .flatMap(req -> req.getFromDate().datesUntil(req.getToDate().plusDays(1)))
-//                    .filter(date -> !date.isBefore(startDate) && !date.isAfter(endDate))
-//                    .map(date -> date.toString()) // Định dạng YYYY-MM-DD
-//                    .distinct()
-//                    .collect(Collectors.toList());
-//
-//            SimpleEmployeeStatusResponse response = SimpleEmployeeStatusResponse.builder()
-//                    .id(emp.getEmpId())
-//                    .name(emp.getFullName())
-//                    .leaveDays(leaveDays)
-//                    .build();
-//
-//            result.add(response);
-//        }
-//
-//        return result;
-//    }
+    private static final String MONTH_VIEW = "month";
+    private static final String EMPLOYEE_HEADER = "Employee";
+    private static final String DEPARTMENT_HEADER = "Department";
+    private static final String NO_LEAVE_STATUS = "No Leave";
 
     @Override
     @PreAuthorize("hasAuthority('VIEW_AGENDA')")
     public List<SimpleEmployeeStatusResponse> getSimpleEmployeeStatus(LocalDate startDate, LocalDate endDate, String viewMode) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Long userId = Long.valueOf(auth.getName());
+        long userId = Long.parseLong(auth.getName());
         User currentUser = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
-        final LocalDate adjustedStartDate = "month".equals(viewMode)
-                ? startDate.withDayOfMonth(1)
-                : "year".equals(viewMode)
-                ? startDate.withDayOfYear(1)
-                : startDate;
 
-        final LocalDate adjustedEndDate = "month".equals(viewMode)
-                ? endDate.withDayOfMonth(endDate.lengthOfMonth())
-                : "year".equals(viewMode)
-                ? endDate.withDayOfYear(endDate.lengthOfYear())
-                : endDate;
+        LocalDate adjustedStartDate;
+        if (MONTH_VIEW.equals(viewMode)) {
+            adjustedStartDate = startDate.withDayOfMonth(1);
+        } else if ("year".equals(viewMode)) {
+            adjustedStartDate = startDate.withDayOfYear(1);
+        } else {
+            adjustedStartDate = startDate;
+        }
+
+        final LocalDate adjustedEndDate;
+        if (MONTH_VIEW.equals(viewMode)) {
+            adjustedEndDate = endDate.withDayOfMonth(endDate.lengthOfMonth());
+        } else {
+            if ("year".equals(viewMode)) adjustedEndDate = endDate.withDayOfYear(endDate.lengthOfYear());
+            else adjustedEndDate = endDate;
+        }
 
         List<Employee> subordinates = employeeService.getAllSubordinateEmployees(currentUser.getEmployee().getEmpId());
         if (subordinates.isEmpty()) {
@@ -132,7 +104,7 @@ public class AgendaServiceImpl implements AgendaService {
     @PreAuthorize("hasAuthority('VIEW_AGENDA')")
     public ByteArrayInputStream exportToExcel(LocalDate startDate, LocalDate endDate) throws IOException {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Long userId = Long.valueOf(auth.getName());
+        long userId = Long.parseLong(auth.getName());
 
         // Tạo workbook
         Workbook workbook = new XSSFWorkbook();
@@ -217,9 +189,9 @@ public class AgendaServiceImpl implements AgendaService {
 
         Row dayHeaderRow = daySheet.createRow(1);
         dayHeaderRow.setHeight((short) (15 * 20)); // Tăng chiều cao hàng header
-        dayHeaderRow.createCell(0).setCellValue("Employee");
+        dayHeaderRow.createCell(0).setCellValue(EMPLOYEE_HEADER);
         dayHeaderRow.getCell(0).setCellStyle(headerStyle);
-        dayHeaderRow.createCell(1).setCellValue("Department");
+        dayHeaderRow.createCell(1).setCellValue(DEPARTMENT_HEADER);
         dayHeaderRow.getCell(1).setCellStyle(headerStyle);
 
         LocalDate currentDateIterator = startDate;
@@ -255,7 +227,7 @@ public class AgendaServiceImpl implements AgendaService {
                     statusCell.setCellValue("Off");
                     statusCell.setCellStyle(offStyle);
                 } else {
-                    statusCell.setCellValue("No Leave");
+                    statusCell.setCellValue(NO_LEAVE_STATUS);
                     statusCell.setCellStyle(noLeaveStyle);
                 }
                 currentDateIterator = currentDateIterator.plusDays(1);
@@ -265,7 +237,7 @@ public class AgendaServiceImpl implements AgendaService {
         // Sheet 2: Monthly Status
         LocalDate monthStart = startDate.withDayOfMonth(1);
         LocalDate monthEnd = endDate.withDayOfMonth(endDate.lengthOfMonth());
-        List<SimpleEmployeeStatusResponse> monthEmployees = getSimpleEmployeeStatus(monthStart, monthEnd, "month");
+        List<SimpleEmployeeStatusResponse> monthEmployees = getSimpleEmployeeStatus(monthStart, monthEnd, MONTH_VIEW);
         Sheet monthSheet = workbook.createSheet("Monthly Status");
 
         Row monthTitleRow = monthSheet.createRow(0);
@@ -284,9 +256,9 @@ public class AgendaServiceImpl implements AgendaService {
 
         Row monthHeaderRow = monthSheet.createRow(1);
         monthHeaderRow.setHeight((short) (15 * 20));
-        monthHeaderRow.createCell(0).setCellValue("Employee");
+        monthHeaderRow.createCell(0).setCellValue(EMPLOYEE_HEADER);
         monthHeaderRow.getCell(0).setCellStyle(headerStyle);
-        monthHeaderRow.createCell(1).setCellValue("Department");
+        monthHeaderRow.createCell(1).setCellValue(DEPARTMENT_HEADER);
         monthHeaderRow.getCell(1).setCellStyle(headerStyle);
 
         LocalDate currentMonth = monthStart;
@@ -322,7 +294,7 @@ public class AgendaServiceImpl implements AgendaService {
                     statusCell.setCellValue(leaveCount + " days");
                     statusCell.setCellStyle(offStyle);
                 } else {
-                    statusCell.setCellValue("No Leave");
+                    statusCell.setCellValue(NO_LEAVE_STATUS);
                     statusCell.setCellStyle(noLeaveStyle);
                 }
                 currentMonth = currentMonth.plusMonths(1);
@@ -351,9 +323,9 @@ public class AgendaServiceImpl implements AgendaService {
 
         Row yearHeaderRow = yearSheet.createRow(1);
         yearHeaderRow.setHeight((short) (15 * 20));
-        yearHeaderRow.createCell(0).setCellValue("Employee");
+        yearHeaderRow.createCell(0).setCellValue(EMPLOYEE_HEADER);
         yearHeaderRow.getCell(0).setCellStyle(headerStyle);
-        yearHeaderRow.createCell(1).setCellValue("Department");
+        yearHeaderRow.createCell(1).setCellValue(DEPARTMENT_HEADER);
         yearHeaderRow.getCell(1).setCellStyle(headerStyle);
 
         LocalDate currentYear = yearStart;
@@ -389,7 +361,7 @@ public class AgendaServiceImpl implements AgendaService {
                     statusCell.setCellValue(leaveCount + " days");
                     statusCell.setCellStyle(offStyle);
                 } else {
-                    statusCell.setCellValue("No Leave");
+                    statusCell.setCellValue(NO_LEAVE_STATUS);
                     statusCell.setCellStyle(noLeaveStyle);
                 }
                 currentYear = currentYear.plusYears(1);
@@ -398,7 +370,14 @@ public class AgendaServiceImpl implements AgendaService {
 
         // Tự động điều chỉnh độ rộng cột cho tất cả sheet
         for (Sheet sheet : new Sheet[]{daySheet, monthSheet, yearSheet}) {
-            int totalColumns = sheet == daySheet ? totalColumnsDay : sheet == monthSheet ? totalColumnsMonth : totalColumnsYear;
+            int totalColumns;
+            if (sheet == daySheet) {
+                totalColumns = totalColumnsDay;
+            } else if (sheet == monthSheet) {
+                totalColumns = totalColumnsMonth;
+            } else {
+                totalColumns = totalColumnsYear;
+            }
             for (int i = 0; i < totalColumns; i++) {
                 sheet.autoSizeColumn(i);
             }
@@ -407,18 +386,16 @@ public class AgendaServiceImpl implements AgendaService {
         // Lưu file vào backend với xử lý lỗi
         String exportDir = "exports/";
         File directory = new File(exportDir);
-        if (!directory.exists()) {
-            if (!directory.mkdirs()) {
-                System.err.println("Failed to create directory: " + exportDir);
-            }
+        if (!directory.exists() && !directory.mkdirs()) {
+            log.error("Failed to create directory: {}", exportDir);
         }
 
         String filePath = exportDir + fileName;
         try (FileOutputStream fos = new FileOutputStream(filePath)) {
             workbook.write(fos);
-            System.out.println("File saved successfully at: " + filePath);
+            log.info("File saved successfully at: {}", filePath);
         } catch (IOException e) {
-            System.err.println("Error saving file to " + filePath + ": " + e.getMessage());
+            log.error("Error saving file to {}: {}", filePath, e.getMessage());
         }
 
         // Trả về file để tải về
