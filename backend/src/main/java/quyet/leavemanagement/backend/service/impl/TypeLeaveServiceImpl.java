@@ -19,13 +19,12 @@ public class TypeLeaveServiceImpl implements TypeLeaveService {
 
     @Override
     public List<TypeLeaveResponse> GetAllTypeLeave() {
-        List<TypeLeaveResponse> typeLeaveResponseList = typeLeaveRepository.findAll().stream()
+        return typeLeaveRepository.findAll().stream()
                 .map(typeLeave -> TypeLeaveResponse.builder()
                         .typeLeaveId(typeLeave.getTypeLeaveId())
                         .nameTypeLeave(typeLeave.getNameTypeLeave())
                         .description(typeLeave.getDescription())
                         .build())
                 .toList();
-        return typeLeaveResponseList;
     }
 }

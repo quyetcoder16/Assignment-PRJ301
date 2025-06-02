@@ -22,10 +22,13 @@ public class CustomJwtDecoder implements JwtDecoder {
     @Value("${jwt.access-token-signer-key}")
     private String accessTokenSignerKey;
 
-    @Autowired
-    private JwtService jwtService;
+    private final JwtService jwtService;
 
     private NimbusJwtDecoder nimbusJwtDecoder = null;
+
+    public CustomJwtDecoder(JwtService jwtService) {
+        this.jwtService = jwtService;
+    }
 
     @Override
     public Jwt decode(String token) throws JwtException {

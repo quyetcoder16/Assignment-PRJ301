@@ -61,7 +61,7 @@ public class AgendaController {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         String currentDate = LocalDate.now().format(dateFormatter);
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Long userId = Long.valueOf(auth.getName());
+        long userId = Long.parseLong(auth.getName());
         String fileName = "export_" + currentDate + "_" + userId + "_report.xlsx";
         headers.add("Content-Disposition", "attachment; filename=" + fileName);
         headers.add("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");

@@ -81,7 +81,7 @@ public class AgendaServiceImpl implements AgendaService {
     @PreAuthorize("hasAuthority('VIEW_AGENDA')")
     public List<SimpleEmployeeStatusResponse> getSimpleEmployeeStatus(LocalDate startDate, LocalDate endDate, String viewMode) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Long userId = Long.valueOf(auth.getName());
+        long userId = Long.parseLong(auth.getName());
         User currentUser = userRepository.findByUserId(userId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
@@ -132,7 +132,7 @@ public class AgendaServiceImpl implements AgendaService {
     @PreAuthorize("hasAuthority('VIEW_AGENDA')")
     public ByteArrayInputStream exportToExcel(LocalDate startDate, LocalDate endDate) throws IOException {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Long userId = Long.valueOf(auth.getName());
+        long userId = Long.parseLong(auth.getName());
 
         // Tạo workbook
         Workbook workbook = new XSSFWorkbook();

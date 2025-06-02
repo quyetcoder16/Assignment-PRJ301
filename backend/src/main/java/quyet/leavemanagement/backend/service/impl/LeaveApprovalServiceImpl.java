@@ -5,6 +5,8 @@ import jakarta.mail.internet.MimeMessage;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -42,6 +44,8 @@ import java.util.List;
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class LeaveApprovalServiceImpl implements LeaveApprovalService {
 
+    private static final Logger logger = LoggerFactory.getLogger(LeaveApprovalServiceImpl.class);
+
     UserRepository userRepository;
     RequestLeaveRepository requestLeaveRepository;
     EmployeeService employeeService;
@@ -65,7 +69,8 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
         }
 
         // Chuyển đổi ngày tạo đơn từ String sang LocalDateTime
-        LocalDateTime startCreated = null, endCreated = null;
+        LocalDateTime startCreated = null;
+        LocalDateTime endCreated = null;
         if (StringUtils.hasText(startCreatedAt)) {
             startCreated = LocalDateTime.parse(startCreatedAt, DateTimeFormatter.ISO_DATE_TIME);
         }
@@ -74,7 +79,8 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
         }
 
         // Chuyển đổi ngày nghỉ từ String sang LocalDate
-        LocalDate leaveStart = null, leaveEnd = null;
+        LocalDate leaveStart = null;
+        LocalDate leaveEnd = null;
         if (StringUtils.hasText(leaveDateStart)) {
             leaveStart = LocalDate.parse(leaveDateStart, DateTimeFormatter.ISO_DATE);
         }
@@ -131,7 +137,6 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
         if (requestLeave.getFromDate().isBefore(LocalDate.now())) {
             throw new AppException(ErrorCode.DO_NOT_EDIT_LEAVE_IN_THE_PASS);
         }
-
 
         // Xử lý theo action
         RequestStatus newStatus;
@@ -204,22 +209,21 @@ public class LeaveApprovalServiceImpl implements LeaveApprovalService {
                     .replace("{processedBy}", requestLeave.getEmployeeProcess().getFullName())
                     .replace("{noteProcess}", requestLeave.getNoteProcess() != null ? requestLeave.getNoteProcess() : "N/A");
 
-            System.out.println(emailTemplate);
+            logger.debug("Email template: {}", emailTemplate);
 
             helper.setTo(employeeEmail);
             helper.setSubject("Leave Request Status Update - " + status.toUpperCase());
             helper.setText(emailTemplate, true);
 
             mailSender.send(mimeMessage);
-            System.out.println("Email sent successfully to " + employeeEmail + " for request ID: " + requestLeave.getIdRequest());
+            logger.info("Email sent successfully to {} for request ID: {}", employeeEmail, requestLeave.getIdRequest());
         } catch (MessagingException e) {
-            System.err.println("MessagingException while sending email for request " + requestLeave.getIdRequest() + ": " + e.getMessage());
+            logger.error("MessagingException while sending email for request {}: {}", requestLeave.getIdRequest(), e.getMessage(), e);
             if (e.getCause() != null) {
-                System.err.println("Cause: " + e.getCause().getMessage());
+                logger.error("Cause: {}", e.getCause().getMessage());
             }
         } catch (IOException e) {
-            System.err.println("IOException while sending email for request " + requestLeave.getIdRequest() + ": " + e.getMessage());
+            logger.error("IOException while sending email for request {}: {}", requestLeave.getIdRequest(), e.getMessage(), e);
         }
     }
 }
-
